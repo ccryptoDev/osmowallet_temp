@@ -1,0 +1,37 @@
+
+
+export enum TransactionSubtype {
+    CREDIT_STABLE_OSMO = 'credit-stable-osmo',
+    DEBIT_STABLE_OSMO = 'debit-stable-osmo',
+    DEBIT_BTC_TRANSFER_LN = 'debit-btc-transfer-ln',
+    DEBIT_BTC_TRANSFER_IBEXPAY = 'debit-btc-transfer-ibexpay',
+    DEBIT_FIAT_WITHDRAW = 'debit-fiat-withdraw',
+    DEBIT_BTC_BUY_OSMO = 'debit-btc-buy-osmo',
+    CREDIT_BTC_TRANSFER_ONCHAIN = 'credit-btc-transfer-onchain',
+    FEE_FUNDING = 'fee-funding',
+    DEBIT_BTC_TRANSFER_ONCHAIN = 'debit-btc-transfer-onchain',
+    FEE_AUTOCONVERT_SELL = 'fee-autoconvert-sell',
+    FEE_SELL = 'fee-sell',
+    FEE_WITHDRAW = 'fee-withdraw',
+    CREDIT_BTC_SELL_OSMO = 'credit-btc-sell-osmo',
+    CREDIT_FIAT_RECURRENT_OSMO = 'credit-fiat-recurrente-osmo',
+    DEBIT_FIAT_WITHDRAW_OSMO = 'debit-fiat-withdraw-osmo',
+    DEBIT_BTC_WITHDRAW_CASHOUT = 'debit-btc-withdraw-cashout',
+    CREDIT_BTC_TRANSFER_LN = 'credit-btc-transfer-ln',
+    FEE_BUY = 'fee-buy',
+    CREDIT_FIAT_PARTNER = 'credit-fiat-partner',
+    CREDIT_FIAT_SELL = 'credit-fiat-sell',
+    FEE_PARTNER = 'fee-partner',
+    DEBIT_FIAT_BUY = 'debit-fiat-buy',
+    CREDIT_FIAT_FUNDING_OSMO = 'credit-fiat-funding-osmo',
+    CREDIT_BTC_AUTOCONVERT_SELL = 'credit-btc-autoconvert-sell',
+    DEBIT_REFERRAL_OSMO = 'debit-referral-osmo',
+    DEBIT_BTC_SELL = 'debit-btc-sell',
+    CREDIT_FIAT_FUNDING = 'credit-fiat-funding',
+    CREDIT_FIAT_TRANSFER = 'credit-fiat-transfer',
+    CREDIT_BTC_BUY = 'credit-btc-buy',
+    DEBIT_FIAT_TRANSFER = 'debit-fiat-transfer'
+    /// ADMIN
+    
+
+}

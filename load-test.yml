@@ -1,0 +1,57 @@
+config:
+  target: https://stg.api.osmowallet.com
+  http:
+    defaults:
+      headers:
+        authorization: Bearer 
+  phases:
+    - duration: 60
+      arrivalRate: 1
+      rampTo: 5
+      name: Warm up phase
+      maxVusers: 50
+    - duration: 60
+      arrivalRate: 5
+      rampTo: 10
+      name: Ramp up load
+    - duration: 60
+      arrivalRate: 10
+      rampTo: 15
+      name: Spike phase
+    - duration: 60
+      arrivalRate: 15
+      rampTo: 25
+      name: Spike phase2
+    - duration: 60
+      arrivalRate: 25
+      rampTo: 30
+      name: Spike phase2
+
+  # Load & configure a couple of useful plugins
+  # https://docs.art/reference/extensions
+  plugins:
+    ensure: {}
+    apdex: {}
+    metrics-by-endpoint: {}
+  apdex:
+    threshold: 500
+scenarios:
+  - flow:
+      - loop:
+          # - get:
+          #     url: "/coins"
+          - get:
+              url: "/me"
+          # - get:
+          #     url: "/me/wallets"
+          # - get:
+          #     url: "/me/bank-accounts"
+          # - post:
+          #     url: "/send/fiat"
+          #     json:
+          #       coinId: "b807050a-4c85-4949-8b8b-a465546cb640"
+          #       receiverId: "c9175ebb-b709-466c-8d73-ceb72fa5ccfc"
+          #       amount: 1
+          #     expect:
+          #       - statusCode: 201
+        count: 100
