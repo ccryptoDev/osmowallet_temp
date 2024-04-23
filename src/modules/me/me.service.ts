@@ -12,7 +12,8 @@ import { Period } from 'src/entities/period.entity';
 import { Preference } from 'src/entities/preference.entity';
 import { User } from 'src/entities/user.entity';
 import { Wallet } from 'src/entities/wallet.entity';
-import { In, Not, Repository } from 'typeorm';
+import { JoinMethod } from 'src/entities/join.method.entity';
+import { In, Join, Not, Repository } from 'typeorm';
 import { BankAccountDto } from './dto/banks.account.dto';
 import { PreferenceDto } from './dto/preference.dto';
 import { RecentContact } from 'src/entities/recent.contact.entity';
@@ -49,6 +50,8 @@ export class MeService {
     private usernameService: UsernameMsService,
     private googleCloudStorageService: GoogleCloudStorageService,
     private walletService: WalletsService,
+    @InjectRepository(JoinMethod)
+    private joinMethodRepository: Repository<JoinMethod>,
   ) {}
 
   async updatePhone(authUser: AuthUser, data: any) {
@@ -139,6 +142,7 @@ export class MeService {
       relations: {
         verifications: true,
         addresses: true,
+        joinMethod: true
       },
       where: { id: authUser.sub },
     });
@@ -323,4 +327,17 @@ export class MeService {
     return preferenceRecord;
   }
   
+  async updateJoinMethod(authUser: AuthUser, data: JoinMethod) {
+    try {
+      const user = await this.userRepository.findOneBy({ id: authUser.sub });
+      // if(user) throw new BadRequestException('Este email ya existe');
+        
+      await this.userRepository.update(authUser.sub, {
+        joinMethod: data,
+      });
+      
+    } catch (error) {
+      throw error;
+    }    
+  }
 }
