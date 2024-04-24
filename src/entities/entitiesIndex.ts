@@ -57,6 +57,8 @@ import { GlobalPaymentCountry } from "./globalPaymentCountry.entity";
 import { WalletHistory } from "./walletHistory.entity";
 import { TransactionCategory } from "./transactionCategory.entity";
 import { CountryCoin } from "./countryCoin.entity";
+import { ReferralSource } from "./referral.source.entity";
+import { UserReferralSource } from "./user.referral.source.entity";
 
 export default [
     User,
@@ -118,5 +120,7 @@ export default [
     BlockchainNetworkAddress,
     GlobalPayment,
     GlobalPaymentCountry,
-    CountryCoin
+    CountryCoin,
+    ReferralSource,
+    UserReferralSource
 ];

@@ -1,11 +1,11 @@
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity({name: 'coins'})
-export class JoinMethod {
+@Entity({name: 'referral_source'})
+export class ReferralSource {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
-  method: string
+  source_name: string;
 
 }

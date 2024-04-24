@@ -6,12 +6,12 @@ import {
   UpdateDateColumn,
   OneToOne,
 } from 'typeorm';
-import { Verification } from './verification.entity';
 import { Exclude } from 'class-transformer';
+import { Verification } from './verification.entity';
 import { Address } from './address.entity';
 import { UserRole } from './roleUser.entity';
 import { Nit } from './bill.entity';
-import { JoinMethod } from './join.method.entity';
+import { UserReferralSource } from './user.referral.source.entity';
 
 @Entity({ name: 'users' })
 export class User {
@@ -93,7 +93,6 @@ export class User {
   @OneToOne(() => Nit, (nit) => nit.user)
   nit: Nit;
 
-  @OneToOne(() => JoinMethod, (joinMethod) => joinMethod.method)
-  joinMethod: JoinMethod;
-
+  @OneToOne(() => UserReferralSource, (UserReferralSource) => UserReferralSource.user)
+  userReferralSource: UserReferralSource;
 }
