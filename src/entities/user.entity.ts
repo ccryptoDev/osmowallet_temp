@@ -11,6 +11,7 @@ import { Exclude } from 'class-transformer';
 import { Address } from './address.entity';
 import { UserRole } from './roleUser.entity';
 import { Nit } from './bill.entity';
+import { JoinMethod } from './join.method.entity';
 
 @Entity({ name: 'users' })
 export class User {
@@ -91,4 +92,8 @@ export class User {
 
   @OneToOne(() => Nit, (nit) => nit.user)
   nit: Nit;
+
+  @OneToOne(() => JoinMethod, (joinMethod) => joinMethod.method)
+  joinMethod: JoinMethod;
+
 }
