@@ -71,6 +71,7 @@ import { UsersService } from '../users/users.service';
 import { KycService } from '../kyc/kyc.service';
 import { FundingTransactionLimit } from 'src/entities/fundingTransactionLimits.entity';
 import { FundingMethod } from 'src/entities/fundingMethod.entity';
+import { ReferralSource } from 'src/entities/referral.source.entity';
 
 @Injectable()
 export class AuthService {
@@ -96,6 +97,7 @@ export class AuthService {
     @InjectRepository(Tier) private tierRepository: Repository<Tier>,
     @InjectRepository(TierUser) private tierUserRepository: Repository<TierUser>,
     @InjectRepository(FundingMethod) private fundingMethodRepository: Repository<FundingMethod>,
+    @InjectRepository(ReferralSource) private referralSourceRepository: Repository<ReferralSource>,
     @InjectModel(UsaUser.name) private usaUserModel: Model<UsaUser>,
     private ibexService: IbexService,
     private jwtService: JwtService,
@@ -472,7 +474,7 @@ export class AuthService {
       throw new BadRequestException('Ya existe un usuario con este username');
     }
 
-    const [features, role, period, tier, coins, fundingMethods] = await Promise.all([
+    const [features, role, period, tier, coins, fundingMethods, referralSources] = await Promise.all([
       this.featureRepository.find({
         where: { name: In([FeatureEnum.FUNDING, FeatureEnum.WITHDRAW]) },
       }),
@@ -480,7 +482,8 @@ export class AuthService {
       this.periodRepository.findOneBy({ name: '5 minutes' }),
       this.tierRepository.findOneBy({name: 'Standard'}),
       this.coinService.getAll(),
-      this.fundingMethodRepository.find()
+      this.fundingMethodRepository.find(),
+      this.referralSourceRepository.find(),
     ]);
 
     //Create user
@@ -545,6 +548,8 @@ export class AuthService {
         };
       })
       await transactionalEntityManager.insert(FundingTransactionLimit, fundingTransactionLimits);
+
+      
     });
     this.userService.updateResidence(newUser.id,{residence: newUser.residence})
     this.referralService.referral({sub: newUser.id});

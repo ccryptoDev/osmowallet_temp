@@ -27,6 +27,7 @@ import { EditMobileDto } from './dto/editMobile.dto';
 import { UpdateResidenceDto } from './dto/residence-update.dto';
 import { User } from 'src/common/decorators/user.decorator';
 import { UsersService } from '../users/users.service';
+import { UpdateReferralSourceDto } from './dto/updateReferralSource.dto';
 
 @UseGuards(AccessTokenGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -158,11 +159,12 @@ export class MeController {
     return this.meService.getRecentContacts(authUser);
   }
 
-  // @Put('join-method')
-  // updateJoinMethod(@Req() req: Request, @Body() data: JoinMethod) {
-  //   const authUser: AuthUser = {
-  //     sub: req.user['sub'],
-  //   };
-  //   return this.meService.updateJoinMethod(authUser, data);
-  // }
+  @Put('referral-source')
+  updateReferralSource(@Req() req: Request, @Body() data: UpdateReferralSourceDto) {
+    const authUser: AuthUser = {
+      sub: req.user['sub']
+    };
+    return this.meService.updateReferralSource(authUser, data);
+  }
+  
 }

@@ -26,6 +26,9 @@ import { UsernameMsService } from '../username-ms/username-ms.service';
 import { IbexAccount } from 'src/entities/ibex.account.entity';
 import { EditEmailDto } from './dto/editEmail.dto';
 import { WalletsService } from '../wallets/wallets.service';
+import { UpdateReferralSourceDto } from './dto/updateReferralSource.dto';
+import { UserReferralSource } from 'src/entities/user.referral.source.entity';
+import { ReferralSource } from 'src/entities/referral.source.entity';
 
 @Injectable()
 export class MeService {
@@ -49,6 +52,8 @@ export class MeService {
     private usernameService: UsernameMsService,
     private googleCloudStorageService: GoogleCloudStorageService,
     private walletService: WalletsService,
+    @InjectRepository(UserReferralSource) private userReferralSourceRepository: Repository<UserReferralSource>,
+    @InjectRepository(ReferralSource) private referralSourceRepository: Repository<ReferralSource>,
   ) {}
 
   async updatePhone(authUser: AuthUser, data: any) {
@@ -321,6 +326,35 @@ export class MeService {
     preferenceRecord.cryptoCoin = data.cryptoCoin;
     await this.preferenceRepository.save(preferenceRecord, { reload: true });
     return preferenceRecord;
+  }
+
+  async updateReferralSource(authUser: AuthUser, data: UpdateReferralSourceDto) {
+    try {
+      const user = await this.userRepository.findOneBy({ id: authUser.sub });
+      const userReferralSource = await this.userReferralSourceRepository.findOneBy({ user: user });
+
+      const referralSource = await this.referralSourceRepository.findOneBy({ id: data.referralSourceId });
+
+      if (userReferralSource) { // update
+
+        await this.userReferralSourceRepository.update(userReferralSource.id, {
+          user,
+          referralSource
+        });
+
+      } else { // create new
+
+        const userReferralSourceNew = this.userReferralSourceRepository.create({
+          user,
+          referralSource
+        });
+        await this.userReferralSourceRepository.insert(userReferralSourceNew);
+
+      }
+      
+    } catch (error) {
+      throw error;
+    }
   }
   
   // async updateJoinMethod(authUser: AuthUser, data: JoinMethod) {
