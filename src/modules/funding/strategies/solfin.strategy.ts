@@ -82,7 +82,6 @@ export class SolfinFunding implements Funding {
                 wallet: userWallet,
             })
 
-
             const fundingTransactionLimit = await entityManager.findOne(FundingTransactionLimit, {
                 where: {
                     user: { id: this.user.id },
@@ -96,7 +95,7 @@ export class SolfinFunding implements Funding {
             await entityManager.save(fundingTransactionLimit)
 
             await Promise.all([
-                entityManager.insert(Transaction, [userTransaction]),
+                entityManager.insert(Transaction,[userTransaction]),
             ])
         })
 

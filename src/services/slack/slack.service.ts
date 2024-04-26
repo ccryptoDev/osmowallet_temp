@@ -14,6 +14,7 @@ export class SlackService {
             axios({ method: 'POST', baseURL: baseURL, data }).catch(err => console.log(err))
     }
 
+
     static async errorTransaction(data: ErrorTemplate) {
         axios({ method: 'POST', baseURL: process.env.SLACK_WEBHOOK_URL, data }).catch(err => console.log(err))
     }

@@ -30,7 +30,6 @@ import { Funding } from "./funding";
 export class CashInFunding implements Funding {
     private fundingTransactionLimit: FundingTransactionLimit
     private coin: Coin
-
     constructor(
         private manager: EntityManager,
         private user: User,
@@ -38,12 +37,11 @@ export class CashInFunding implements Funding {
     ) { }
 
     async fund() {
-        this.coin = await this.manager.findOneBy(Coin, { id: this.body.coinId })
-        await this.validateData()
+        this.coin = await this.manager.findOneBy(Coin, {id: this.body.coinId })
         await this.manager.transaction('SERIALIZABLE', async entityManager => {
             const [userWallet, osmoWallet, partner] = await Promise.all([
-                findAndLockWallet({ entityManager: entityManager, coinId: this.coin.id, userId: this.user.id }),
-                findAndLockWallet({ entityManager: entityManager, coinId: this.coin.id, alias: MainWalletsAccount.MAIN }),
+                findAndLockWallet({entityManager: entityManager, coinId: this.coin.id, userId: this.user.id}),
+                findAndLockWallet({entityManager: entityManager, coinId: this.coin.id, alias: MainWalletsAccount.MAIN}),
                 entityManager.findOneBy(App, { name: this.body.partner }),
             ])
 
@@ -103,7 +101,7 @@ export class CashInFunding implements Funding {
         })
     }
 
-    private async validateData() {
+    private async validateDate() {
         const [fundingTransactionLimit, tierUser] = await Promise.all([
             this.manager.findOne(FundingTransactionLimit, {
                 where: {
@@ -112,6 +110,7 @@ export class CashInFunding implements Funding {
                 },
             }),
             this.manager.findOne(TierUser, {
+                relations: {tier: true},
                 where: {
                     user: {
                         id: this.user.id
@@ -126,7 +125,7 @@ export class CashInFunding implements Funding {
         const tierFunding = await this.manager.findOne(TierFunding, {
             where: {
                 fundingMethod: { id: this.body.fundingMethodId },
-                tier: tierUser.tier
+                tier: {id: tierUser.tier.id}
             },
         })
 

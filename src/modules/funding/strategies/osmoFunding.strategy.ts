@@ -6,7 +6,6 @@ import { Status } from "src/common/enums/status.enum";
 import { TransactionMethodEnum } from "src/common/enums/transactionMethod.enum";
 import { TransactionType } from "src/common/enums/transactionsType.enum";
 import { TransactionSubtype } from "src/common/enums/transactionSubtype.enum";
-import { formatDateToSpanish } from "src/common/utils/date-formatter.util";
 import { findAndLockWallet } from "src/common/utils/find-and-lock-wallet";
 import { Bank } from "src/entities/bank.entity";
 import { Coin } from "src/entities/coin.entity";
@@ -119,16 +118,14 @@ export class OsmoBankFunding extends DynamicDtoValidator implements Funding {
     }
 
     async notify(transactionGroup: TransactionGroup) {
-        const date = new Date()
         const template = new FundingPendingTemplate(
             [{ email: this.user.email, name: this.user.firstName }],
             {
-                amount: this.body.amount,
-                currency: this.coin.acronym,
-                date: formatDateToSpanish(date),
-                status: Status.PENDING,
-                transactionId: transactionGroup.id
-            },
+            amount: this.body.amount,
+            currency: this.coin.acronym, 
+            date: (new Date()).toDateString(),
+            status: Status.PENDING,
+            transactionId: transactionGroup.id},
         )
         this.sendGridService.sendMail(template)
         const emails = process.env.ENV == 'PROD'
@@ -138,7 +135,7 @@ export class OsmoBankFunding extends DynamicDtoValidator implements Funding {
             emails,
             this.user.firstName + ' ' + this.user.lastName,
             this.user.email,
-            { amount: this.body.amount, currency: this.coin.acronym, date: formatDateToSpanish(date), status: Status.PENDING, transactionId: transactionGroup.id }
+            {amount: this.body.amount,currency: this.coin.acronym,date: (new Date()).toDateString(),status: Status.PENDING,transactionId: transactionGroup.id}
         )
         this.sendGridService.sendMail(osmoTemplate)
     }
@@ -160,6 +157,7 @@ export class OsmoBankFunding extends DynamicDtoValidator implements Funding {
                 },
             }),
             this.manager.findOne(TierUser, {
+                relations: {tier: true},
                 where: {
                     user: {
                         id: this.user.id
@@ -181,7 +179,7 @@ export class OsmoBankFunding extends DynamicDtoValidator implements Funding {
         const tierFunding = await this.manager.findOne(TierFunding, {
             where: {
                 fundingMethod: { id: this.fundingMethod.id },
-                tier: tierUser.tier
+                tier: {id: tierUser.tier.id}
             },
         })
 

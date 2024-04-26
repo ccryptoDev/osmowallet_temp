@@ -1,40 +1,39 @@
-import { BadRequestException } from "@nestjs/common";
-import Decimal from "decimal.js";
-import { DynamicDtoValidator } from "src/common/dto_validators/dynamic.validator";
-import { MainWalletsAccount } from "src/common/enums/main-wallets.enum";
-import { Partner } from "src/common/enums/partner.enum";
-import { Status } from "src/common/enums/status.enum";
-import { TransactionMethodEnum } from "src/common/enums/transactionMethod.enum";
-import { TransactionType } from "src/common/enums/transactionsType.enum";
-import { TransactionSubtype } from "src/common/enums/transactionSubtype.enum";
-import { findAndLockWallet } from "src/common/utils/find-and-lock-wallet";
-import { Coin } from "src/entities/coin.entity";
-import { Transaction } from "src/entities/transaction.entity";
-import { TransactionFee } from "src/entities/transactionFee.entity";
-import { TransactionGroup } from "src/entities/transactionGroup.entity";
-import { User } from "src/entities/user.entity";
-import { Wallet } from "src/entities/wallet.entity";
-import { WithdrawalMethod } from "src/entities/withdrawalMethod.entity";
-import { BalanceUpdaterService } from "src/modules/balance-updater/balance-updater.service";
-import { UpdateBalanceTransferType } from "src/modules/balance-updater/enums/type.enum";
-import { UpdateBalance } from "src/modules/balance-updater/interfaces/updateBalance";
-import { CoinEnum } from "src/modules/me/enums/coin.enum";
-import { PushNotificationService } from "src/modules/push-notification/push-notification.service";
-import { SinpeMobileWithdrawPayload } from "src/modules/solfin/interfaces/sinpe-withdraw";
-import { SolfinService } from "src/modules/solfin/solfin.service";
-import { GoogleCloudTasksService } from "src/services/google-cloud-tasks/google-cloud-tasks.service";
-import { SlackChannel } from "src/services/slack/enums/slack-channels.enum";
-import { SlackEmoji } from "src/services/slack/enums/slack-emoji.enum";
-import { SlackWebhooks } from "src/services/slack/enums/slack-webhooks.enum";
-import { SlackService } from "src/services/slack/slack.service";
-import { createTransactionsTemplate } from "src/services/slack/templates/transactions.template";
 import { EntityManager } from "typeorm";
-import { SinpeMovilWithdrawDto } from "../dtos/sinpe-movil.withdraw.dto";
 import { WithdrawDto } from "../dtos/withdraw.dto";
-import { WithdrawalMethodEnum } from "../enums/withdrawalMethod.enum";
-import { RefundSinpePayload } from "./sinpe.strategy";
 import { Withdraw } from "./withdraw";
-
+import { Coin } from "src/entities/coin.entity";
+import { Status } from "src/common/enums/status.enum";
+import { Wallet } from "src/entities/wallet.entity";
+import Decimal from "decimal.js";
+import { TransactionType } from "src/common/enums/transactionsType.enum";
+import { TransactionMethodEnum } from "src/common/enums/transactionMethod.enum";
+import { TransactionGroup } from "src/entities/transactionGroup.entity";
+import { Transaction } from "src/entities/transaction.entity";
+import { User } from "src/entities/user.entity";
+import { Partner } from "src/common/enums/partner.enum";
+import { DynamicDtoValidator } from "src/common/dto_validators/dynamic.validator";
+import { SolfinService } from "src/modules/solfin/solfin.service";
+import { BadRequestException } from "@nestjs/common";
+import { TransactionSubtype } from "src/common/enums/transactionSubtype.enum";
+import { CoinEnum } from "src/modules/me/enums/coin.enum";
+import { SinpeMovilWithdrawDto } from "../dtos/sinpe-movil.withdraw.dto";
+import { SinpeMobileWithdrawPayload } from "src/modules/solfin/interfaces/sinpe-withdraw";
+import { findAndLockWallet } from "src/common/utils/find-and-lock-wallet";
+import { SlackService } from "src/services/slack/slack.service";
+import { SlackWebhooks } from "src/services/slack/enums/slack-webhooks.enum";
+import { createTransactionsTemplate } from "src/services/slack/templates/transactions.template";
+import { SlackChannel } from "src/services/slack/enums/slack-channels.enum";
+import { WithdrawalMethodEnum } from "../enums/withdrawalMethod.enum";
+import { SlackEmoji } from "src/services/slack/enums/slack-emoji.enum";
+import { RefundSinpePayload } from "./sinpe.strategy";
+import { PushNotificationService } from "src/modules/push-notification/push-notification.service";
+import { MainWalletsAccount } from "src/common/enums/main-wallets.enum";
+import { TransactionFee } from "src/entities/transactionFee.entity";
+import { WithdrawalMethod } from "src/entities/withdrawalMethod.entity";
+import { UpdateBalance } from "src/modules/balance-updater/interfaces/updateBalance";
+import { UpdateBalanceTransferType } from "src/modules/balance-updater/enums/type.enum";
+import { BalanceUpdaterService } from "src/modules/balance-updater/balance-updater.service";
+import { GoogleCloudTasksService } from "src/services/google-cloud-tasks/google-cloud-tasks.service";
 
 
 export class SinpeMobileWithdraw implements Withdraw {
@@ -183,9 +182,8 @@ export class SinpeMobileWithdraw implements Withdraw {
                     name: WithdrawalMethodEnum.SINPE_MOBILE,
                     emoji: SlackEmoji.FLAG_CR
                   }, 
-                  attachmentUrl: "https://firebasestorage.googleapis.com/v0/b/osmowallet.appspot.com/o/logo_cuadrado.png?alt=media&token=955446df-d591-484c-986f-1211a14dad98"  
+                  attachmentUrl: "https://firebasestorage.googleapis.com/v0/b/osmowallet.appspot.com/o/logo_cuadrado.png?alt=media&token=955446df-d591-484c-986f-1211a14dad98"
                 }) 
-            })
         })
         .catch(error => {
             this.refundTransaction({
@@ -197,23 +195,8 @@ export class SinpeMobileWithdraw implements Withdraw {
             })
         })
 
-        SlackService.notifyTransaction({ 
-            baseURL: SlackWebhooks.OSMO_WITHDRAW, 
-            data: createTransactionsTemplate({ 
-              channel: SlackChannel.OSMO_WITHDRAW, 
-              amount: this.body.amount, 
-              coin: CoinEnum[this.coin.acronym],
-              firstName: this.user.firstName, 
-              lastName: this.user.lastName, 
-              email: this.user.email, 
-              transactionType: {
-                name: WithdrawalMethodEnum.SINPE_MOBILE,
-                emoji: SlackEmoji.FLAG_CR
-              }, 
-              attachmentUrl: "https://firebasestorage.googleapis.com/v0/b/osmowallet.appspot.com/o/logo_cuadrado.png?alt=media&token=955446df-d591-484c-986f-1211a14dad98"
-            }) 
-        })
-    }
+    })
+}
 
     private async refundTransaction(data: RefundSinpePayload) {
         await this.manager.transaction('SERIALIZABLE', async entityManager => {

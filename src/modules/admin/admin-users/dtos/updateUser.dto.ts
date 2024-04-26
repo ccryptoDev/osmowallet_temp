@@ -1,7 +1,7 @@
 import { IsEmail, IsISO31661Alpha2, IsOptional, IsString, Validate, ValidateIf } from 'class-validator';
-import { IsNullValue } from 'src/common/decorators/is-null.decorator';
 import { IsMobileValid } from 'src/common/dto_validators/mobile.validator';
 import { IsValidPassword } from 'src/common/dto_validators/password.validator';
+import { IsNullValue } from 'src/common/decorators/is-null.decorator';
 
 export class UpdateUsersDto {
     @IsOptional()

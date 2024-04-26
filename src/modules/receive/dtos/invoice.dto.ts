@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber } from "class-validator";
+import { IsNumber } from "class-validator";
 
 
 export class InvoiceDto{
@@ -7,14 +7,4 @@ export class InvoiceDto{
 
     @IsNumber()
     btcPrice: number
-}
-
-export class InvoiceDtoV2 {
-    @IsNumber()
-    amountSats: number
-
-    @IsNotEmpty()
-    rocket: any
-
-    btcPrice?: number
 }

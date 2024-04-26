@@ -1,52 +1,72 @@
-import { formatName } from "src/common/utils/name-formatter.util";
-import { EmailAttachmentStructure, EmailContentStructure, EmailToStructure, SendgridTemplate } from "../sendgridBase.template";
+import { EmailAttachmentStructure, EmailContentStructure, EmailFromStructure, EmailToStructure, SendgridTemplate } from "../sendgridBase.template";
 
 /*
     This class send email verification to the user extending of base class
  */
     export class SigninSessionTemplate extends SendgridTemplate{
 
-        template: string = `
-        <!DOCTYPE html><html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en"><head><title></title><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch><o:AllowPNG/></o:OfficeDocumentSettings></xml><![endif]--><!--[if !mso]><!--><link 
-href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet" type="text/css"><!--<![endif]--><style>
-*{box-sizing:border-box}body{margin:0;padding:0}a[x-apple-data-detectors]{color:inherit!important;text-decoration:inherit!important}#MessageViewBody a{color:inherit;text-decoration:none}p{line-height:inherit}.desktop_hide,.desktop_hide table{mso-hide:all;display:none;max-height:0;overflow:hidden}.image_block img+div{display:none} @media (max-width:670px){.social_block.desktop_hide .social-table{display:inline-block!important}.image_block div.fullWidth{max-width:100%!important}.mobile_hide{display:none}.row-content{width:100%!important}.stack .column{width:100%;display:block}.mobile_hide{min-height:0;max-height:0;max-width:0;overflow:hidden;font-size:0}.desktop_hide,.desktop_hide table{display:table!important;max-height:none!important}.row-5 .column-1 .block-2.text_block td.pad{padding:0 0 0 35px!important}.row-5 .column-1 .block-1.image_block td.pad{padding:0 0 0 5px!important}.row-5 .column-2 .block-1.social_block td.pad{padding:15px 5px 0 30px!important}}
-</style></head><body style="background-color:#e3e2e2;margin:0;padding:0;-webkit-text-size-adjust:none;text-size-adjust:none"><table class="nl-container" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;background-color:#e3e2e2"><tbody><tr><td><table class="row row-1" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" 
-style="mso-table-lspace:0;mso-table-rspace:0;background-color:#fff;background-size:auto"><tbody><tr><td><table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;background-size:auto;background-color:#fff;border-radius:0;color:#000;width:650px;margin:0 auto" width="650"><tbody><tr><td class="column column-1" width="100%" 
-style="mso-table-lspace:0;mso-table-rspace:0;font-weight:400;text-align:left;vertical-align:top;border-top:0;border-right:0;border-bottom:0;border-left:0"><div class="spacer_block block-1" style="height:25px;line-height:25px;font-size:1px"> </div><table class="image_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0"><tr><td class="pad" style="width:100%;padding-right:0;padding-left:0"><div 
-class="alignment" align="center" style="line-height:10px"><div style="max-width:260px"><img src="https://d15k2d11r6t6rl.cloudfront.net/public/users/Integrators/f7683d20-2948-460f-8f91-a13fe519b593/8S7TDHZ1MY25VT9O0AEWVQUF/1_2.png" style="display:block;height:auto;border:0;width:100%" width="260"></div></div></td></tr></table></td></tr></tbody></table></td></tr></tbody></table><table class="row row-2" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" 
-style="mso-table-lspace:0;mso-table-rspace:0;background-color:#fff"><tbody><tr><td><table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;background-color:#fff;border-radius:0;color:#000;width:650px;margin:0 auto" width="650"><tbody><tr><td class="column column-1" width="100%" 
-style="mso-table-lspace:0;mso-table-rspace:0;font-weight:400;text-align:left;padding-bottom:5px;padding-top:5px;vertical-align:top;border-top:0;border-right:0;border-bottom:0;border-left:0"><table class="image_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0"><tr><td class="pad" style="width:100%;padding-right:0;padding-left:0"><div class="alignment" align="center" style="line-height:10px"><div 
-class="fullWidth" style="max-width:625px"><img src="https://d15k2d11r6t6rl.cloudfront.net/public/users/Integrators/f7683d20-2948-460f-8f91-a13fe519b593/8S7TDHZ1MY25VT9O0AEWVQUF/OSMO%20ESTARA%CC%81%20EN%20MANTENIMIENTO%20%2811%29.png" style="display:block;height:auto;border:0;width:100%" width="625"></div></div></td></tr></table><table class="divider_block block-2" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0"><tr><td 
-class="pad"><div class="alignment" align="center"><table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%" style="mso-table-lspace:0;mso-table-rspace:0"><tr><td class="divider_inner" style="font-size:1px;line-height:1px;border-top:1px solid #bbb"><span> </span></td></tr></table></div></td></tr></table><table class="text_block block-3" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" 
-style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad" style="padding-bottom:10px;padding-left:45px;padding-right:10px;padding-top:10px"><div style="font-family:sans-serif"><div class style="font-size:14px;font-family:Figtree,sans-serif;mso-line-height-alt:16.8px;color:#555;line-height:1.2"><p style="margin:0;font-size:16px;text-align:justify;mso-line-height-alt:19.2px">Hola ${formatName(this.to[0].name)} ,<br><br>
-Hemos detectado un nuevo inicio de sesión en tu cuenta Osmo el día: ${(new Date()).toISOString()}</p></div></div></td></tr></table></td></tr></tbody></table></td></tr></tbody></table><table class="row row-3" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;background-color:#fff"><tbody><tr><td><table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" 
-style="mso-table-lspace:0;mso-table-rspace:0;background-color:#e3e2e2;color:#000;border-radius:19px;width:650px;margin:0 auto" width="650"><tbody><tr><td class="column column-1" width="100%" style="mso-table-lspace:0;mso-table-rspace:0;font-weight:400;text-align:left;padding-bottom:5px;padding-top:5px;vertical-align:top;border-top:0;border-right:0;border-bottom:0;border-left:0"><table class="text_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" 
-style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad" style="padding-bottom:10px;padding-left:45px;padding-top:10px"><div style="font-family:sans-serif"><div class style="font-size:14px;font-family:Figtree,sans-serif;mso-line-height-alt:16.8px;color:#555;line-height:1.2"><p style="margin:0;font-size:16px;mso-line-height-alt:19.2px"><span style="color:#000000;font-size:16px;"><span style="color:#4e4d4d;">IP: ${this.ip}</span></span></p><p 
-style="margin:0;font-size:16px;mso-line-height-alt:19.2px"><br><span style="color:#000000;font-size:16px;"><span style="color:#4e4d4d;">Dispositivo: ${this.deviceName}</span></span></p><p style="margin:0;font-size:16px;mso-line-height-alt:16.8px"> </p><p style="margin:0;font-size:16px;mso-line-height-alt:19.2px"><span style="font-size:16px;">Ubicación: ${this.location}</span></p><p style="margin:0;font-size:16px;mso-line-height-alt:16.8px"> </p><p style="margin:0;font-size:16px;mso-line-height-alt:19.2px">
-<span style="font-size:16px;">*La ubicación es aproximada según la dirección IP de inicio de sesión.</span></p><p style="margin:0;font-size:16px;mso-line-height-alt:16.8px"> </p></div></div></td></tr></table></td></tr></tbody></table></td></tr></tbody></table><table class="row row-4" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;background-color:#fff"><tbody><tr><td><table class="row-content stack" 
-align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;background-color:#fff;border-radius:0;color:#000;width:650px;margin:0 auto" width="650"><tbody><tr><td class="column column-1" width="100%" style="mso-table-lspace:0;mso-table-rspace:0;font-weight:400;text-align:left;padding-bottom:5px;padding-top:5px;vertical-align:top;border-top:0;border-right:0;border-bottom:0;border-left:0"><table class="text_block block-1" width="100%" 
-border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad" style="padding-bottom:10px;padding-left:45px;padding-right:10px"><div style="font-family:sans-serif"><div class style="font-size:14px;font-family:Figtree,sans-serif;mso-line-height-alt:16.8px;color:#555;line-height:1.2"><p style="margin:0;mso-line-height-alt:16.8px"> </p><p style="margin:0;mso-line-height-alt:16.8px">
-<span style="font-size:16px;">Si no reconces este inicio de sesión, contáctanos directamente en alguno de estos canales de comunicación:<br><br>1️⃣ <a href="https://osmowallet.page.link/open-app" target="_blank" style="text-decoration: underline; color: #0068A5;" rel="noopener">Chat interno dentro de app</a><br>
-2️⃣ <a href="https://www.osmowallet.com/#" target="_blank" style="text-decoration: underline; color: #0068A5;" rel="noopener">Chat en nuestro página web</a><br>3️⃣ Correo a ayuda@osmowallet.com<br>4️⃣ <a href="https://wa.me/16697771054" target="_blank" style="text-decoration: underline; color: #0068A5;" rel="noopener">Whatsapp</a></span></p><p style="margin:0;mso-line-height-alt:16.8px"> </p><p style="margin:0;mso-line-height-alt:19.2px">
-<span style="font-size:16px;">Recuerda que nuestros agentes NUNCA te pedirán tu contraseña o PIN. </span></p></div></div></td></tr></table></td></tr></tbody></table></td></tr></tbody></table><table class="row row-5" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;background-color:#fff"><tbody><tr><td><table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" 
-role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;background-color:#e3e2e2;color:#000;width:650px;margin:0 auto" width="650"><tbody><tr><td class="column column-1" width="50%" style="mso-table-lspace:0;mso-table-rspace:0;font-weight:400;text-align:left;padding-top:15px;vertical-align:top;border-top:0;border-right:0;border-bottom:0;border-left:0"><table class="image_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" 
-style="mso-table-lspace:0;mso-table-rspace:0"><tr><td class="pad" style="padding-left:45px;width:100%;padding-right:0"><div class="alignment" align="left" style="line-height:10px"><div style="max-width:81.25px"><a href="http://example.com" target="_blank" style="outline:none" tabindex="-1"><img src="https://d15k2d11r6t6rl.cloudfront.net/public/users/Integrators/f7683d20-2948-460f-8f91-a13fe519b593/8S7TDHZ1MY25VT9O0AEWVQUF/osmo-mailing-violet-14.png" 
-style="display:block;height:auto;border:0;width:100%" width="81.25" alt="Osmo" title="Osmo"></a></div></div></td></tr></table><table class="text_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad" style="padding-bottom:15px;padding-left:45px"><div style="font-family:sans-serif"><div class 
-style="font-size:14px;font-family:Figtree,sans-serif;mso-line-height-alt:16.8px;color:#393d47;line-height:1.2"><p style="margin:0;font-size:14px;text-align:left;mso-line-height-alt:16.8px"><span style="color:#4e4d4d;font-size:11px;">Bitcoin de la forma más fácil.</span></p></div></div></td></tr></table></td><td class="column column-2" width="50%" 
-style="mso-table-lspace:0;mso-table-rspace:0;font-weight:400;text-align:left;padding-bottom:5px;padding-top:5px;vertical-align:top;border-top:0;border-right:0;border-bottom:0;border-left:0"><table class="social_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0"><tr><td class="pad" style="padding-left:5px;padding-right:5px;padding-top:15px;text-align:left"><div class="alignment" align="left"><table 
-class="social-table" width="144px" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;display:inline-block"><tr><td style="padding:0 4px 0 0"><a href="https://www.facebook.com/osmoenvios/" target="_blank"><img src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-dark-gray/facebook@2x.png" width="32" height="32" alt="Facebook" title="facebook" style="display:block;height:auto;border:0"></a>
-</td><td style="padding:0 4px 0 0"><a href="https://twitter.com/osmowallet" target="_blank"><img src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-dark-gray/twitter@2x.png" width="32" height="32" alt="Twitter" title="twitter" style="display:block;height:auto;border:0"></a></td><td style="padding:0 4px 0 0"><a href="https://www.instagram.com/osmowallet/" target="_blank"><img 
-src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-dark-gray/instagram@2x.png" width="32" height="32" alt="Instagram" title="instagram" style="display:block;height:auto;border:0"></a></td><td style="padding:0 4px 0 0"><a href="https://www.tiktok.com/@osmowallet?lang=en" target="_blank"><img src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-dark-gray/tiktok@2x.png" width="32" height="32" alt="TikTok" 
-title="TikTok" style="display:block;height:auto;border:0"></a></td></tr></table></div></td></tr></table></td></tr></tbody></table></td></tr></tbody></table></td></tr></tbody></table><!-- End --></body></html>
-        `
+        /// The link is where the user will be redirected after click the button in the email
+        link: string = ''
+    
+        /// This template in html format will be displayed in the email
+        template: string = "<html>"+
+                    "<body style='"+
+                    "background-image: url('https://upload."+
+                "wikimedia.org/wikipedia/commons/thumb/f/ff/"+
+                "Solid_blue.svg/768px-Solid_blue.svg.png?20150316143734');"+
+                "background-position: center center;"+
+                "background-repeat: no-repeat;"+
+                "background-attachment: fixed;"+
+                "background-size: cover;"+
+                "background-color: 'black';"+
+                "'>"+
+                "<div style='background-color: white; opacity: 0.8;'>"+
+                "<img style='height: 150px; display:block; margin: auto;'"+
+                "src='https://firebasestorage.googleapis.com/v0/b/osmowallet.appspot.com/o/logo_horizontal.png?alt=media&token=a5c62c30-3949-42f1-87b0-6a685ba29cfe&_gl=1*cwq17r*_ga*ODMwNzgzNzUxLjE2ODQ4NTIwMTc.*_ga_CW55HF8NVT*MTY5ODc2NDUyNC4zMDMuMS4xNjk4NzY0NTU5LjI1LjAuMA'>"+
+                "</div>"+
+                "<div style='height: auto; background-color: white; opacity: 0.5;'>"+
+                "<div style='padding: 20px;'>"+
+                "<p style='color: black;font-size: 30px;font-family: 'Helvetica';'>"+
+                "¡Hola!"+
+                "</p>"+
+                "<p style='color: black;font-size: 20px;font-family: 'Helvetica';'>"+
+                "Hemos detectado un nuevo inicio de sesión en tu cuenta Osmo el dia ***date***:"+
+                "</p>"+
+                "<p style='color: black;font-size: 20px;font-family: 'Helvetica';'>"+
+                "- IP: <strong>***ip***</strong><br>"+
+                "- Dispositivo: <strong>***deviceName***</strong><br>"+
+                "- Ubicación*: <strong>***location***</strong><br>"+
+                "</p>"+
+                "<p style='color: black;font-size: 15px;font-family: 'Helvetica';'>"+
+                "*La ubicación es aproximada según la dirección"+
+                " IP de inicio de sesión."+
+                "</p>"+
+                "<p style='color: black;font-size: 20px;font-family: 'Helvetica';'>"+
+                "En caso de tener inconvenientes, puedes contactar al "+
+                "<a href='https://osmowallet.com'>centro de ayuda</a>."+
+                "</p>"+
+                "</div>"+
+                "<div>"+
+                "</div>"+
+            "</div>"+
+            "</body>"+
+            "</html>";
         constructor(
             to: Array<EmailToStructure>,
-            private ip: string,
-            private deviceName: string,
-            private location: string,
+            token: string,
+            username: string,
+            ip: string,
+            deviceName: string,
+            location: string,
             attachments?: Array<EmailAttachmentStructure>,
             ){
             super(to,attachments)
+            this.template = this.template.replace('***date***',(new Date()).toDateString())
+            this.link = `https://${process.env.DOMAIN}/?token=`+token
+            this.template = this.template.replace('***link***',this.link)
+            this.template = this.template.replace('***ip***',ip)
+            this.template = this.template.replace('***deviceName***',deviceName)
+            this.template = this.template.replace('***location***',location)
             const emailContent = new EmailContentStructure()
             this.subject = 'Nueva sesión registrada'
             emailContent.value = this.template

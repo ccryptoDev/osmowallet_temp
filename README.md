@@ -95,7 +95,7 @@ $ npm run start:prod
 ```
 
 ```bash
-  # Generate a new migration 
+  # Run project 
   $ npm run start:dev
 ```
 

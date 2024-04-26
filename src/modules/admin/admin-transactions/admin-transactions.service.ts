@@ -27,17 +27,27 @@ import { FundingRejectedTemplate } from 'src/modules/send-grid/templates/funding
 import { WithdrawalRejectedTemplate } from 'src/modules/send-grid/templates/withdrawal/rejectedWithdrawal.template';
 import { WithdrawalApprovedTemplate } from 'src/modules/send-grid/templates/withdrawal/withdrawalApproved.template';
 import { GetTransactionsDto } from 'src/modules/transactions/dtos/getTransaction.dto';
-import { Between, Brackets, Equal, FindOptionsWhere, In, LessThanOrEqual, Like, MoreThanOrEqual, Repository } from 'typeorm';
+import {
+    Between,
+    Brackets,
+    Equal,
+    FindOptionsWhere,
+    In,
+    LessThanOrEqual,
+    Like,
+    MoreThanOrEqual,
+    Repository,
+} from 'typeorm';
 import { AdminTransactionFactory } from './create-transactions/admin-transaction.factory';
 import { ApproveTransactionDto } from './dtos/approveFunding.dto';
 import { CreateAdminTransactionDto } from './dtos/create-transaction.dto';
+import { CSVTransactionDto } from './dtos/csvTransaction.dto';
 import { GetTransactionsMetricsDto } from './dtos/getTotalTransactions.dto';
 import { NetFlowMetricDto } from './dtos/net-flow-metric.dto';
 import { RejectTransactionDto } from './dtos/rejectTransaction.dto';
 import { Month } from './enums/months.enum';
 import { MyLogger } from 'src/common/loggers/mylogger.logger';
 import { GoogleCloudTasksService } from 'src/services/google-cloud-tasks/google-cloud-tasks.service';
-import { formatDateToSpanish } from 'src/common/utils/date-formatter.util';
 import { findAndLockWallet } from 'src/common/utils/find-and-lock-wallet';
 import { MainWalletsAccount } from 'src/common/enums/main-wallets.enum';
 import { PartnersService } from 'src/modules/partners/partners.service';
@@ -205,7 +215,9 @@ export class AdminTransactionsService {
         const consolidatedUsdAmount = results
             ? results.reduce(
                   (sum, result) =>
-                      new Decimal(new Decimal(sum).plus(new Decimal(result.total).div(coin.exchangeRate)).toFixed(2)).toNumber(),
+                      new Decimal(
+                          new Decimal(sum).plus(new Decimal(result.total).div(coin.exchangeRate)).toFixed(2),
+                      ).toNumber(),
                   0,
               )
             : 0;
@@ -216,7 +228,11 @@ export class AdminTransactionsService {
     }
 
     async createTransaction(data: CreateAdminTransactionDto) {
-        const adminTransaction = AdminTransactionFactory.getTransactionType(data, this.userRepository.manager, this.ibexService);
+        const adminTransaction = AdminTransactionFactory.getTransactionType(
+            data,
+            this.userRepository.manager,
+            this.ibexService,
+        );
         await adminTransaction.create();
     }
 
@@ -300,9 +316,12 @@ export class AdminTransactionsService {
         }
         // Conditionally add where clause if data.userId is not null
         if (queries.userId) {
-            queryBuilder = queryBuilder.where('transactionGroup.fromUser.id = :userId OR transactionGroup.toUser.id = :userId', {
-                userId: queries.userId,
-            });
+            queryBuilder = queryBuilder.where(
+                'transactionGroup.fromUser.id = :userId OR transactionGroup.toUser.id = :userId',
+                {
+                    userId: queries.userId,
+                },
+            );
         }
         if (queries.partner != null) {
             queryBuilder = queryBuilder.where('transactionGroup.partner = :partner', {
@@ -387,7 +406,7 @@ export class AdminTransactionsService {
         const pageSize = 15;
         const currentPage = queries.page || 1;
         const offset = (currentPage - 1) * pageSize;
-        const userQuery = queries.query ? searchQuery : queries.userId ? { id: 'ada177d7-e10d-40c4-9976-bbd42ce08c2d' } : [];
+        const userQuery = queries.query ? searchQuery : queries.userId ? { id: queries.userId } : [];
         const noteQuery: FindOptionsWhere<TransactionGroup> = {
             ...constantQueries,
             note: queries.query ? Like(`%${queries.query}%`) : null,
@@ -427,7 +446,7 @@ export class AdminTransactionsService {
                 fees: {
                     coin: true,
                 },
-                referral: true,
+                //referral: true,
             },
         });
         const totalTransactionGroups = Math.ceil(transactions[1] / pageSize);
@@ -494,6 +513,7 @@ export class AdminTransactionsService {
             partner: partnerQuery,
         };
     }
+
     async rejectTransaction(id: string, body: RejectTransactionDto) {
         try {
             const transactionGroup = await this.transactionGroupRepository.findOne({
@@ -507,8 +527,10 @@ export class AdminTransactionsService {
                 },
             });
             if (!transactionGroup) throw new BadRequestException('Invalid transaction Id');
-            if (transactionGroup.status == Status.COMPLETED) throw new BadRequestException('The Transaction has been completed already');
-            if (transactionGroup.status == Status.REJECTED) throw new BadRequestException('The Transaction has ben rejected already');
+            if (transactionGroup.status == Status.COMPLETED)
+                throw new BadRequestException('The Transaction has been completed already');
+            if (transactionGroup.status == Status.REJECTED)
+                throw new BadRequestException('The Transaction has ben rejected already');
             const isStable = transactionGroup.method == TransactionMethodEnum.STABLE_COIN;
 
             if (transactionGroup.type == TransactionType.FUNDING) {
@@ -531,7 +553,9 @@ export class AdminTransactionsService {
     }
 
     private async rejectWithdraw(transactionGroup: TransactionGroup, data: RejectTransactionDto) {
-        const debitUserAmount = transactionGroup.transactions.find((t) => t.subtype == TransactionSubtype.DEBIT_FIAT_WITHDRAW).amount;
+        const debitUserAmount = transactionGroup.transactions.find(
+            (t) => t.subtype == TransactionSubtype.DEBIT_FIAT_WITHDRAW,
+        ).amount;
         const rejectedStatus = Status.REJECTED;
 
         await this.transactionGroupRepository.manager.transaction('SERIALIZABLE', async (entityManager) => {
@@ -541,7 +565,9 @@ export class AdminTransactionsService {
                 userId: transactionGroup.fromUser.id,
             });
 
-            const updatedAvailableBalance = new Decimal(userWallet.availableBalance).plus(debitUserAmount).toNumber();
+            const updatedAvailableBalance = new Decimal(userWallet.availableBalance)
+                .plus(debitUserAmount)
+                .toNumber();
             await Promise.all([
                 entityManager.update(Wallet, userWallet.id, { availableBalance: updatedAvailableBalance }),
                 entityManager.update(TransactionGroup, transactionGroup.id, {
@@ -614,8 +640,10 @@ export class AdminTransactionsService {
                 },
             });
             if (!transactionGroup) throw new BadRequestException('Invalid transaction Id');
-            if (transactionGroup.status == Status.COMPLETED) throw new BadRequestException('The Transaction has been completed already');
-            if (transactionGroup.status == Status.REJECTED) throw new BadRequestException('The Transaction has ben rejected already');
+            if (transactionGroup.status == Status.COMPLETED)
+                throw new BadRequestException('The Transaction has been completed already');
+            if (transactionGroup.status == Status.REJECTED)
+                throw new BadRequestException('The Transaction has ben rejected already');
             const isStable = transactionGroup.method == TransactionMethodEnum.STABLE_COIN;
             if (transactionGroup.type == TransactionType.FUNDING) {
                 if (isStable) {
@@ -687,9 +715,15 @@ export class AdminTransactionsService {
     }
 
     private async approveWithdraw(transactionGroup: TransactionGroup) {
-        const debitUserAmount = transactionGroup.transactions.find((t) => t.subtype == TransactionSubtype.DEBIT_FIAT_WITHDRAW).amount;
-        const debitOsmoAmount = transactionGroup.transactions.find((t) => t.subtype == TransactionSubtype.DEBIT_FIAT_WITHDRAW_OSMO).amount;
-        const feeOsmoAmount = transactionGroup.transactions.find((t) => t.subtype == TransactionSubtype.FEE_WITHDRAW).amount;
+        const debitUserAmount = transactionGroup.transactions.find(
+            (t) => t.subtype == TransactionSubtype.DEBIT_FIAT_WITHDRAW,
+        ).amount;
+        const debitOsmoAmount = transactionGroup.transactions.find(
+            (t) => t.subtype == TransactionSubtype.DEBIT_FIAT_WITHDRAW_OSMO,
+        ).amount;
+        const feeOsmoAmount = transactionGroup.transactions.find(
+            (t) => t.subtype == TransactionSubtype.FEE_WITHDRAW,
+        ).amount;
         const completeStatus = Status.COMPLETED;
         await this.transactionGroupRepository.manager.transaction('SERIALIZABLE', async (entityManager) => {
             const [userWallet, osmoWallet, osmoWalletFee] = await Promise.all([
@@ -714,16 +748,30 @@ export class AdminTransactionsService {
             if (transactionGroup.partner == Partner.STRIKE) {
                 fee = 0;
             }
-            const updatedUserWalletBalance = new Decimal(userWallet.balance).minus(debitUserAmount).toNumber();
-            const updatedOsmoWalletAvailableBalance = new Decimal(osmoWallet.availableBalance).minus(debitUserAmount).toNumber();
-            const updatedOsmoWalletBalance = new Decimal(osmoWallet.balance).minus(debitOsmoAmount).toNumber();
+            const updatedUserWalletBalance = new Decimal(userWallet.balance)
+                .minus(debitUserAmount)
+                .toNumber();
+            const updatedOsmoWalletAvailableBalance = new Decimal(osmoWallet.availableBalance)
+                .minus(debitUserAmount)
+                .toNumber();
+            const updatedOsmoWalletBalance = new Decimal(osmoWallet.balance)
+                .minus(debitOsmoAmount)
+                .toNumber();
             const updatedOsmoWalletFeeBalance = new Decimal(osmoWalletFee.balance).plus(fee).toNumber(); // Should be 0 if comes from strike
-            const updatedOsmoWalletFeeAvailableBalance = new Decimal(osmoWalletFee.availableBalance).plus(fee).toNumber();
+            const updatedOsmoWalletFeeAvailableBalance = new Decimal(osmoWalletFee.availableBalance)
+                .plus(fee)
+                .toNumber();
 
             await Promise.all([
                 entityManager.update(Wallet, userWallet.id, { balance: updatedUserWalletBalance }),
-                entityManager.update(Wallet, osmoWallet.id, { availableBalance: updatedOsmoWalletAvailableBalance, balance: updatedOsmoWalletBalance }),
-                entityManager.update(Wallet, osmoWalletFee.id, { balance: updatedOsmoWalletFeeBalance, availableBalance: updatedOsmoWalletFeeAvailableBalance }),
+                entityManager.update(Wallet, osmoWallet.id, {
+                    availableBalance: updatedOsmoWalletAvailableBalance,
+                    balance: updatedOsmoWalletBalance,
+                }),
+                entityManager.update(Wallet, osmoWalletFee.id, {
+                    balance: updatedOsmoWalletFeeBalance,
+                    availableBalance: updatedOsmoWalletFeeAvailableBalance,
+                }),
                 entityManager.update(TransactionGroup, transactionGroup.id, { status: completeStatus }),
             ]);
             const template = new WithdrawalApprovedTemplate(
@@ -753,9 +801,17 @@ export class AdminTransactionsService {
         const settings = await this.settingRepository.find();
         const stableCoin = await this.coinRepository.findOneBy({ acronym: 'USDT' });
         const usdLowerRate = getStableRate(settings, RateType.LOWER, CoinEnum.USD);
-        const fiatLowerRate = getStableRate(settings, RateType.LOWER, transactionGroup.transactionCoin.acronym);
-        const lowerRate = transactionGroup.transactionCoin.acronym == CoinEnum.USD ? usdLowerRate : fiatLowerRate;
-        const upperRate = transactionGroup.transactionCoin.acronym == CoinEnum.USD ? new Decimal(1) : fiatLowerRate.dividedBy(usdLowerRate);
+        const fiatLowerRate = getStableRate(
+            settings,
+            RateType.LOWER,
+            transactionGroup.transactionCoin.acronym,
+        );
+        const lowerRate =
+            transactionGroup.transactionCoin.acronym == CoinEnum.USD ? usdLowerRate : fiatLowerRate;
+        const upperRate =
+            transactionGroup.transactionCoin.acronym == CoinEnum.USD
+                ? new Decimal(1)
+                : fiatLowerRate.dividedBy(usdLowerRate);
         const upperRateFixed = new Decimal(upperRate);
 
         const upperAmount = new Decimal(body.amount).times(upperRateFixed);
@@ -775,7 +831,9 @@ export class AdminTransactionsService {
         const userTransaction = transactionGroup.transactions.find(
             (transaction) => transaction.subtype == TransactionSubtype.CREDIT_FIAT_FUNDING,
         );
-        const feeTransaction = transactionGroup.transactions.find((transaction) => transaction.subtype == TransactionSubtype.FEE_FUNDING);
+        const feeTransaction = transactionGroup.transactions.find(
+            (transaction) => transaction.subtype == TransactionSubtype.FEE_FUNDING,
+        );
 
         await this.transactionGroupRepository.manager.transaction('SERIALIZABLE', async (entityManager) => {
             const [userWallet, osmoWallet, osmoFeeWallet] = await Promise.all([
@@ -784,7 +842,11 @@ export class AdminTransactionsService {
                     coinId: transactionGroup.transactionCoin.id,
                     userId: transactionGroup.fromUser.id,
                 }),
-                findAndLockWallet({ entityManager: entityManager, coinId: stableCoin.id, alias: MainWalletsAccount.MAIN }),
+                findAndLockWallet({
+                    entityManager: entityManager,
+                    coinId: stableCoin.id,
+                    alias: MainWalletsAccount.MAIN,
+                }),
                 findAndLockWallet({
                     entityManager: entityManager,
                     coinId: transactionGroup.transactionCoin.id,
@@ -868,7 +930,7 @@ export class AdminTransactionsService {
                     status: rejectedStatus,
                     transactionId: transactionGroup.id,
                     currency: transactionGroup.transactionCoin.acronym,
-                    date: formatDateToSpanish(new Date()),
+                    date: new Date().toISOString(),
                 },
             );
             this.sendGridService.sendMail(template);
@@ -876,9 +938,15 @@ export class AdminTransactionsService {
     }
 
     private async approveStableWithdraw(transactionGroup: TransactionGroup, body: ApproveTransactionDto) {
-        const userTransaction = transactionGroup.transactions.find((t) => t.subtype == TransactionSubtype.DEBIT_FIAT_WITHDRAW);
-        const osmoTransaction = transactionGroup.transactions.find((t) => t.subtype == TransactionSubtype.DEBIT_STABLE_OSMO);
-        const feeOsmoTransaction = transactionGroup.transactions.find((t) => t.subtype == TransactionSubtype.FEE_WITHDRAW);
+        const userTransaction = transactionGroup.transactions.find(
+            (t) => t.subtype == TransactionSubtype.DEBIT_FIAT_WITHDRAW,
+        );
+        const osmoTransaction = transactionGroup.transactions.find(
+            (t) => t.subtype == TransactionSubtype.DEBIT_STABLE_OSMO,
+        );
+        const feeOsmoTransaction = transactionGroup.transactions.find(
+            (t) => t.subtype == TransactionSubtype.FEE_WITHDRAW,
+        );
         const debitUserAmount = userTransaction.amount;
         const debitOsmoAmount = osmoTransaction.amount;
         const feeOsmoAmount = feeOsmoTransaction.amount;
@@ -891,22 +959,37 @@ export class AdminTransactionsService {
                     coinId: transactionGroup.transactionCoin.id,
                     userId: transactionGroup.fromUser.id,
                 }),
-                findAndLockWallet({ entityManager: entityManager, coinId: usdtCoin.id, alias: MainWalletsAccount.MAIN }),
+                findAndLockWallet({
+                    entityManager: entityManager,
+                    coinId: usdtCoin.id,
+                    alias: MainWalletsAccount.MAIN,
+                }),
                 findAndLockWallet({
                     entityManager: entityManager,
                     coinId: transactionGroup.transactionCoin.id,
                     alias: MainWalletsAccount.FEES,
                 }),
             ]);
-            const updatedOsmoFeeWalletBalance = new Decimal(osmoFeeWallet.balance).plus(feeOsmoAmount).toNumber();
-            const updatedUserWalletBalance = new Decimal(userWallet.balance).minus(debitUserAmount).toNumber();
-            const updatedOsmoWalletAvailableBalance = new Decimal(osmoWallet.availableBalance).minus(debitOsmoAmount).toNumber();
-            const updatedOsmoWalletBalance = new Decimal(osmoWallet.balance).minus(debitOsmoAmount).toNumber();
+            const updatedOsmoFeeWalletBalance = new Decimal(osmoFeeWallet.balance)
+                .plus(feeOsmoAmount)
+                .toNumber();
+            const updatedUserWalletBalance = new Decimal(userWallet.balance)
+                .minus(debitUserAmount)
+                .toNumber();
+            const updatedOsmoWalletAvailableBalance = new Decimal(osmoWallet.availableBalance)
+                .minus(debitOsmoAmount)
+                .toNumber();
+            const updatedOsmoWalletBalance = new Decimal(osmoWallet.balance)
+                .minus(debitOsmoAmount)
+                .toNumber();
 
             await Promise.all([
                 entityManager.update(Wallet, osmoFeeWallet.id, { balance: updatedOsmoFeeWalletBalance }),
                 entityManager.update(Wallet, userWallet.id, { balance: updatedUserWalletBalance }),
-                entityManager.update(Wallet, osmoWallet.id, { availableBalance: updatedOsmoWalletAvailableBalance, balance: updatedOsmoWalletBalance }),
+                entityManager.update(Wallet, osmoWallet.id, {
+                    availableBalance: updatedOsmoWalletAvailableBalance,
+                    balance: updatedOsmoWalletBalance,
+                }),
                 entityManager.update(TransactionGroup, transactionGroup.id, {
                     status: completeStatus,
                     metadata: {
@@ -926,7 +1009,7 @@ export class AdminTransactionsService {
                     status: completeStatus,
                     transactionId: transactionGroup.id,
                     currency: transactionGroup.transactionCoin.acronym,
-                    date: formatDateToSpanish(new Date()),
+                    date: new Date().toISOString(),
                 },
             );
             this.sendGridService.sendMail(template);
@@ -935,7 +1018,9 @@ export class AdminTransactionsService {
 
     private async rejectStableWithdraw(transactionGroup: TransactionGroup, data: RejectTransactionDto) {
         const rejectedStatus = Status.REJECTED;
-        const userTransaction = transactionGroup.transactions.find((t) => t.subtype == TransactionSubtype.DEBIT_FIAT_WITHDRAW);
+        const userTransaction = transactionGroup.transactions.find(
+            (t) => t.subtype == TransactionSubtype.DEBIT_FIAT_WITHDRAW,
+        );
         await this.transactionGroupRepository.manager.transaction('SERIALIZABLE', async (entityManager) => {
             const userWallet = await findAndLockWallet({
                 entityManager: entityManager,
@@ -943,7 +1028,9 @@ export class AdminTransactionsService {
                 userId: transactionGroup.fromUser.id,
             });
 
-            const updatedAvailableBalance = new Decimal(userWallet.availableBalance).plus(userTransaction.amount).toNumber();
+            const updatedAvailableBalance = new Decimal(userWallet.availableBalance)
+                .plus(userTransaction.amount)
+                .toNumber();
             await Promise.all([
                 entityManager.update(Wallet, userWallet.id, { availableBalance: updatedAvailableBalance }),
                 entityManager.update(TransactionGroup, transactionGroup.id, {
@@ -963,7 +1050,7 @@ export class AdminTransactionsService {
                     status: rejectedStatus,
                     transactionId: transactionGroup.id,
                     currency: transactionGroup.transactionCoin.acronym,
-                    date: formatDateToSpanish(new Date()),
+                    date: new Date().toISOString(),
                 },
             );
             this.sendGridService.sendMail(template);

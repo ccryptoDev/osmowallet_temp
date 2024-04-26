@@ -1,3 +1,4 @@
+import { intlFormat } from "date-fns"
 import { FundingMethodEnum } from "src/modules/funding/enums/fundingMethod.enum"
 import { CoinEnum } from "src/modules/me/enums/coin.enum"
 import { WithdrawalMethodEnum } from "src/modules/withdraw/enums/withdrawalMethod.enum"
@@ -14,13 +15,12 @@ type TransactionsTemplateParams = {
     transactionType: {
         name: FundingMethodEnum | WithdrawalMethodEnum
         emoji: SlackEmoji
-		type?: string
     }
-    attachmentUrl: string,
+    attachmentUrl: string
 }
-export const createTransactionsTemplate = ({ amount, coin, firstName, lastName, email, transactionType, attachmentUrl }: TransactionsTemplateParams) => {
+
+export const createTransactionsTemplate = ({  amount, coin, firstName, lastName, email, transactionType, attachmentUrl }: TransactionsTemplateParams) => {
 	const [date, hours] = getDateAndHour()
-	
 	return {
 		// "channel": channel,
 		"blocks": [
@@ -29,7 +29,6 @@ export const createTransactionsTemplate = ({ amount, coin, firstName, lastName, 
 				"text": {
 					"type": "mrkdwn",
 					"text": `${transactionType.emoji} *TRANSACTION DETAILS* ${transactionType.emoji}`
-					
 				}
 			},
 			{
@@ -44,8 +43,7 @@ export const createTransactionsTemplate = ({ amount, coin, firstName, lastName, 
 					},
 					{
 						"type": "mrkdwn",
-						"text": `*Transaction Type:*\n ${transactionType.name} _*${transactionType?.type}*_`
-
+						"text": `*Transaction Type:*\n ${transactionType.name}`
 					},
 					{
 						"type": "mrkdwn",
@@ -100,17 +98,7 @@ function getCoinSymbol(coin: CoinEnum) {
     }
 }
 
-
-
-
-
 function getDateAndHour() {
-    const date = new Intl.DateTimeFormat('es-ES', {
-        hourCycle: "h12",
-        dateStyle: "short",
-        timeStyle: "short",
-        timeZone: "America/Guatemala"
-    }).format(new Date());
-    return date.split(",");
-	
+	const date = intlFormat(new Date(), {hour12: true, dateStyle: "short", timeZone: "America/Guatemala", timeStyle: "short" }, {locale: "en-GB"});
+	return date.split(",")
 }

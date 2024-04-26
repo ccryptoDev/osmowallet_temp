@@ -167,16 +167,15 @@ export class SinpeWithdraw implements Withdraw {
                   channel: SlackChannel.OSMO_WITHDRAW, 
                   amount: this.body.amount, 
                   coin: CoinEnum[this.coin.acronym],
-                  firstName: this.user.firstName,
-                  lastName: this.user.lastName,
+                  firstName: this.user.firstName, 
+                  lastName: this.user.lastName, 
                   email: this.user.email, 
                   transactionType: {
                     name: WithdrawalMethodEnum.SINPE,
                     emoji: SlackEmoji.FLAG_CR
                   }, 
-                  attachmentUrl: "https://firebasestorage.googleapis.com/v0/b/osmowallet.appspot.com/o/logo_cuadrado.png?alt=media&token=955446df-d591-484c-986f-1211a14dad98"
+                  attachmentUrl: "https://firebasestorage.googleapis.com/v0/b/osmowallet.appspot.com/o/logo_cuadrado.png?alt=media&token=955446df-d591-484c-986f-1211a14dad98" 
                 }) 
-            })
         })
         .catch((error) => this.refundTransaction({
             amount: amountToUserDebit,
@@ -185,7 +184,8 @@ export class SinpeWithdraw implements Withdraw {
             transactionGroupId: transactionGroup.id,
             userId: this.user.id
         }))
-    }
+    })
+}
 
     private async refundTransaction(data: RefundSinpePayload) {
         await this.manager.transaction('SERIALIZABLE', async entityManager => {

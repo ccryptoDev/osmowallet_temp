@@ -413,10 +413,9 @@ export class KycService {
             return {};
         }
         const kycUser = await this.getKycUser(verification.verificationId);
-        if (kycUser.documents.length == 0) {
+        if (kycUser.documents.lenght == 0) {
             return {};
         }
-        
         const images = kycUser.documents[0]['photos'];
         const fields = kycUser.documents[0].fields;
         const fieldsArray = Object.keys(fields).map((key) => {

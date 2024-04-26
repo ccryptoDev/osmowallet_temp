@@ -15,7 +15,6 @@ import { WithdrawalPendingOsmoTemplate } from "src/modules/send-grid/templates/w
 import { PartnerInvoice } from "src/schemas/partnerInvoice.schema";
 import { EntityManager } from "typeorm";
 import { Withdraw } from "./withdraw";
-import { formatDateToSpanish } from "src/common/utils/date-formatter.util";
 import { findAndLockWallet } from "src/common/utils/find-and-lock-wallet";
 import { MainWalletsAccount } from "src/common/enums/main-wallets.enum";
 import { SlackService } from "src/services/slack/slack.service";
@@ -124,16 +123,15 @@ export class PartnerWithdraw implements Withdraw {
         const emails = process.env.ENV == 'PROD' 
         ? [{email: 'victor@osmowallet.com',name: 'Victor'},{email: 'piero@osmowallet.com',name: 'Piero'}] 
         : [{email: 'as@singularagency.co',name: 'Piero'}]
-        const date = new Date()
         const osmoTemplate = new WithdrawalPendingOsmoTemplate(
             emails,
             user.firstName + ' '+ user.lastName,
             user.email,
-            {amount: this.partnerInvoice.targetAmount.amount, currency: this.partnerInvoice.targetAmount.currency,date: formatDateToSpanish(date),status: Status.PENDING,transactionId: transactionGroup.id}
+            {amount: this.partnerInvoice.targetAmount.amount, currency: this.partnerInvoice.targetAmount.currency,date: (new Date()).toDateString(),status: Status.PENDING,transactionId: transactionGroup.id}
             )
         const template = new WithdrawalPendingTemplate(
             [{email: user.email,name: user.firstName},],
-            {amount: this.partnerInvoice.targetAmount.amount, currency: this.partnerInvoice.targetAmount.currency, date: formatDateToSpanish(date),status: Status.PENDING,transactionId: transactionGroup.id}
+            {amount: this.partnerInvoice.targetAmount.amount, currency: this.partnerInvoice.targetAmount.currency, date: (new Date()).toDateString(),status: Status.PENDING,transactionId: transactionGroup.id}
             )
         this.sendGridService.sendMail(osmoTemplate)
         this.sendGridService.sendMail(template)

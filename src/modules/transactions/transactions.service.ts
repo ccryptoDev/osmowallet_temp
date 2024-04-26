@@ -9,6 +9,7 @@ import {
   MoreThanOrEqual,
   LessThanOrEqual,
   In,
+  IsNull,
   Brackets,
 } from 'typeorm';
 import { GetTransactionsDto } from './dtos/getTransaction.dto';
@@ -45,7 +46,7 @@ export class TransactionsService  {
         }),
       )
       .getCount();
-    const canPerform = transactionCount <= 3
+    const canPerform = transactionCount < 3
     if(!canPerform) throw new BadRequestException('Limit of transaction exceeded')
   }
 

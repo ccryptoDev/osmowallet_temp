@@ -61,10 +61,10 @@ export class FundingService {
                     const strategy = new OnvoFunding(
                         user,
                         this.userRepository.manager,
-                        body,
-                        this.googleTaskService
+                        this.googleTaskService,
+                        body
                     )
-                    await strategy.fund()
+                    await strategy.pay()
                 }
             }
         }
@@ -90,6 +90,7 @@ export class FundingService {
                     },
                 },
             },
+                
             where: {
                 tier: {id: userTier.tier.id},
                 fundingMethod: {
@@ -133,7 +134,7 @@ export class FundingService {
         const user = await this.userRepository.findOneBy({id: authUser.sub })
         const manager = this.userRepository.manager
         let strategy: Funding
-        if(tierFundingMethods.fundingMethod.name === TransactionMethodEnum.TRANSFER){
+        if(tierFundingMethods.fundingMethod.name === TransactionMethodEnum.TRANSFER || tierFundingMethods.fundingMethod.name === TransactionMethodEnum.CASH_IN){
             strategy = new OsmoBankFunding(manager,user,body,this.googleCloudStorageService,this.sendGridService,file, tierFundingMethods.fundingMethod)
         }
         if(tierFundingMethods.fundingMethod.name === FundingMethodEnum.STABLE_COIN){       
@@ -145,9 +146,10 @@ export class FundingService {
         if(tierFundingMethods.fundingMethod.name === FundingMethodEnum.CREDIT_CARD){
             const amount = new Decimal(new Decimal(body.amount).plus(new Decimal(body.amount).times(tierFundingMethods.fundingMethod.fee)).plus(0.25).toFixed(2)).toNumber()
             console.log('amount ',amount)
-            await OnvoFunding.pay(this.cardService,body,user,amount)
+            body.amount = amount
+            strategy = new OnvoFunding(user,manager,this.googleTaskService,null,this.cardService,body)
         }
-        if(tierFundingMethods.fundingMethod.name === FundingMethodEnum.AKISI || tierFundingMethods.fundingMethod.name === TransactionMethodEnum.CASH_IN){
+        if(tierFundingMethods.fundingMethod.name === FundingMethodEnum.AKISI){
             strategy = new CashInFunding(manager, user, body)
         }
         if(strategy){

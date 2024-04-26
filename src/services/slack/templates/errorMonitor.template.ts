@@ -2,7 +2,6 @@
 import { intlFormat } from "date-fns";
 import { SlackChannel } from "../enums/slack-channels.enum";
 
-
 type ErrorTemplateParams = {
     channel: SlackChannel
     userEmail: string

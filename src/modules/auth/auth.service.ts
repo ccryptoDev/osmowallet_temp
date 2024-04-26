@@ -491,8 +491,6 @@ export class AuthService {
     const withdrawFeature = features.find((feature) => feature.name == FeatureEnum.WITHDRAW);
     let newUser: User
     await this.userRepository.manager.transaction(async transactionalEntityManager => {
-      
-      
       // create New User
       newUser = transactionalEntityManager.create(User, signUpDto);
       await transactionalEntityManager.insert(User, newUser);
@@ -561,12 +559,10 @@ export class AuthService {
       const fundingTransactionLimits = fundingMethods.map((method) => {
         return {
           user: newUser,
-          fundingMethod: method,
+          fundingmethod: method,
         };
       })
       await transactionalEntityManager.insert(FundingTransactionLimit, fundingTransactionLimits);
-
-      
     });
     this.userService.updateResidence(newUser.id,{residence: newUser.residence})
     this.referralService.referral({sub: newUser.id});
@@ -683,11 +679,11 @@ export class AuthService {
         ],
       });
       if (!user) throw new UnauthorizedException('Invalid user');
-      // if(data.input == 'demo@gmail.com' && data.otp == 453782){
-      //   const tokens = await this.getTokens(user.id, user.email);
-      //   this.storeTokensForUser(user, tokens);
-      //   return tokens;
-      // }
+      if(data.input == 'demo@gmail.com' && data.otp == 453782){
+        const tokens = await this.getTokens(user.id, user.email);
+        this.storeTokensForUser(user, tokens);
+        return tokens;
+      }
       const otpRecord = await this.otpRepository.findOne({
         where: {
           user: { id: user.id },
@@ -760,6 +756,7 @@ export class AuthService {
       relations: { user: true },
       where: { refreshToken: encryptedrefreshToken },
     });
+    const email = user.email;
     const checkIfExists = await this.pushTokenRepository.findOne({
       where: { authToken: { id: tokenRecord.id } },
     });
@@ -784,11 +781,22 @@ export class AuthService {
       location: data.location,
       platform: data.platform,
     });
-
+    const token = await this.jwtService.signAsync(
+      {
+        sub: user.id,
+        email: email,
+      },
+      {
+        secret: process.env.SESSION_LOGOUT_ALL_ACCESS_KEY,
+        expiresIn: '1h',
+      },
+    );
     await this.sessionRepository.insert(sessionRecord);
     if(user.email != null){
       const siginSessionTemplate = new SigninSessionTemplate(
         [{ email: user.email, name: user.username }],
+        token,
+        user.firstName,
         data.ip,
         data.device,
         data.location,

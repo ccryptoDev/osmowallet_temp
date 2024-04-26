@@ -5,6 +5,7 @@ import { OnvoCheckoutSuccess } from "../interfaces/onvo.checkout.success";
 import { EntityManager } from "typeorm";
 import { Coin } from "src/entities/coin.entity";
 import { TransactionType } from "src/common/enums/transactionsType.enum";
+import { FundingMethod } from "src/entities/fundingMethod.entity";
 import { FundingMethodEnum } from "../enums/fundingMethod.enum";
 import { Wallet } from "src/entities/wallet.entity";
 import { TransactionGroup } from "src/entities/transactionGroup.entity";
@@ -25,18 +26,17 @@ import { createTransactionsTemplate } from "src/services/slack/templates/transac
 import { SlackChannel } from "src/services/slack/enums/slack-channels.enum";
 import { CoinEnum } from "src/modules/me/enums/coin.enum";
 import { SlackEmoji } from "src/services/slack/enums/slack-emoji.enum";
-import { TierFunding } from "src/entities/tierFunding.entity";
-import { BadRequestException } from "@nestjs/common";
 import { GoogleCloudTasksService } from "src/services/google-cloud-tasks/google-cloud-tasks.service";
 import { UpdateBalance } from "src/modules/balance-updater/interfaces/updateBalance";
 import { UpdateBalanceTransferType } from "src/modules/balance-updater/enums/type.enum";
 import { BalanceUpdaterService } from "src/modules/balance-updater/balance-updater.service";
+import { FeeSource } from "src/common/enums/fee-source.enum";
+import { TierFunding } from "src/entities/tierFunding.entity";
+import { BadRequestException } from "@nestjs/common";
+import { UserTransactionLimit } from "src/entities/userTransactionLimit.entity";
+import { Feature } from "src/entities/feature.entity";
 import { TierUser } from "src/entities/tierUser.entity";
 import { FundingTransactionLimit } from "src/entities/fundingTransactionLimits.entity";
-import { FeeSource } from "src/common/enums/fee-source.enum";
-
-
-
 
 export class OnvoFunding implements Funding{
     private coin: Coin
@@ -44,18 +44,21 @@ export class OnvoFunding implements Funding{
     constructor(
         private user: User,
         private manager: EntityManager,
-        private body: OnvoCheckoutSuccess,
-        private googleCloudTaskService: GoogleCloudTasksService
+        private googleCloudTaskService: GoogleCloudTasksService,
+        private onvoBody?: OnvoCheckoutSuccess,
+        private cardService?: CardService,
+        private body?: FundingDto
     ){}
     
-    static async pay(cardService: CardService, body: FundingDto, user: User, amount: number) {
-        const data: OnvoFundingDto = await ValidatorData.validate<OnvoFundingDto>(body.data,OnvoFundingDto)
-        await cardService.pay(user.id,amount,data.paymentMethodId)
+    async fund() {
+        const data: OnvoFundingDto = await ValidatorData.validate<OnvoFundingDto>(this.body.data,OnvoFundingDto)
+        await this.validate()
+        await this.cardService.pay(this.user.id,this.body.amount,data.paymentMethodId)
     }
 
-    async fund() : Promise<any> {
-        await this.setDataToUse()
-        const totalAmount = new Decimal(this.body.data.amount).div(100)
+    async pay() : Promise<any> {
+        await this.setData()
+        const totalAmount = new Decimal(this.onvoBody.data.amount).div(100)
         const denominatorFee = new Decimal(this.fee).add(1)
         const amountToReceive = new Decimal(new Decimal(totalAmount).sub(0.25).div(denominatorFee).toFixed(2)).toNumber();
         const totalFee = new Decimal(new Decimal(totalAmount).sub(amountToReceive).toFixed(2)).toNumber();
@@ -116,7 +119,7 @@ export class OnvoFunding implements Funding{
             baseURL: SlackWebhooks.FUNDING_CARD, 
             data: createTransactionsTemplate({ 
               channel: SlackChannel.FUNDING_CARD, 
-              amount: this.body.data.amount, 
+              amount: totalAmount.toNumber(), 
               coin: CoinEnum[this.coin.acronym],
               firstName: this.user.firstName,
               lastName: this.user.lastName,
@@ -137,24 +140,28 @@ export class OnvoFunding implements Funding{
         this.googleCloudTaskService.createInternalTask(BalanceUpdaterService.queue,payload,BalanceUpdaterService.url)
     }
 
-
-    private async setDataToUse() {
+    private async setData() : Promise<TierFunding>{
         const [coin, tierUser] = await Promise.all([
             this.manager.findOneBy(Coin,{acronym: 'USD'}),
-            this.manager.findOneBy(TierUser,{user: this.user})
+            this.manager.findOne(TierUser,{
+                relations: {tier: true},
+                where: {user: {id: this.user.id}}
+            })
         ])
         this.coin = coin
         
         const tierFunding = await this.manager.findOne(TierFunding,{
             where: {
                 fundingMethod: {name: TransactionMethodEnum.CREDIT_CARD },
-                tier: tierUser.tier
+                tier: {id: tierUser.tier.id}
             },
         })
-
         this.fee = tierFunding.fee
-        
-        
+        return tierFunding
+    }
+
+    private async validate() {
+        const tierFunding = await this.setData()
         const fundingTransactionLimit = await this.manager.findOne(FundingTransactionLimit,{
             where: {
                 user: {id: this.user.id},
@@ -162,11 +169,11 @@ export class OnvoFunding implements Funding{
             },
         })
         
-        const dailyAmountToAmass = fundingTransactionLimit.dailyAmassedAmount + (this.body.data.amount / this.coin.exchangeRate)
-        const monthlyAmountToAmass = fundingTransactionLimit.monthlyAmassedAmount + (this.body.data.amount / this.coin.exchangeRate)
+        const dailyAmountToAmass = fundingTransactionLimit.dailyAmassedAmount + (this.body.amount / this.coin.exchangeRate)
+        const monthlyAmountToAmass = fundingTransactionLimit.monthlyAmassedAmount + (this.body.amount / this.coin.exchangeRate)
 
-        if(this.body.data.amount > tierFunding.max) throw new BadRequestException('Este monto excede el maximo permitido por transacción')
-        if(this.body.data.amount <= tierFunding.min) throw new BadRequestException('Este monto no alcanza el minimo permitido por transacción')
+        if(this.body.amount > tierFunding.max) throw new BadRequestException('Este monto excede el maximo permitido por transacción')
+        if(this.body.amount <= tierFunding.min) throw new BadRequestException('Este monto no alcanza el minimo permitido por transacción')
         if(dailyAmountToAmass > tierFunding.dailyLimit) throw new BadRequestException('Alcanzaste tu limite diario')
         if(monthlyAmountToAmass > tierFunding.monthlyLimit) throw new BadRequestException('Alcanzaste tu limite mensual')
 

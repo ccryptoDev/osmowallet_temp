@@ -12,5 +12,3 @@ export const typeSubtypes = {
     'TRANSACTION' : [TransactionSubtype.CREDIT_FIAT_TRANSFER, TransactionSubtype.DEBIT_FIAT_TRANSFER],
     'RECURRENT_BUY' : [TransactionSubtype.DEBIT_FIAT_BUY]
   }
-
-export const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const

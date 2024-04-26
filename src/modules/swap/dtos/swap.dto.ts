@@ -1,4 +1,5 @@
 import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsUUID } from "class-validator";
+import { CoinEnum } from "src/modules/me/enums/coin.enum";
 import { WalletSwap } from "../enums/swapWallet.enum";
 
 
@@ -16,29 +17,7 @@ export class SwapDto{
     amount: number
 
     @IsNumber()
-    btcPrice?: number
-
-    @IsEnum(WalletSwap)
-    @IsOptional()
-    wallet: WalletSwap = WalletSwap.OSMO
-}
-
-export class SwapDtoTwo {
-    @IsUUID()
-    fromCoinId: string
-
-    @IsUUID()
-    toCoinId: string
-
-    @IsPositive()
-    @IsNumber()
-    @IsNotEmpty()
-    amount: number
-
-    @IsNotEmpty()
-    rocket: any
-
-    btcPrice?: number
+    btcPrice: number
 
     @IsEnum(WalletSwap)
     @IsOptional()

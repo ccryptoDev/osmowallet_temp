@@ -20,7 +20,6 @@ import { OnvoService } from 'src/services/onvo/onvo.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { OnvoPaymentMethod, OnvoPaymentMethodSchema } from 'src/schemas/card.schema';
 import { UserCard, UserCardSchema } from 'src/schemas/userCard.schema';
-import { UsersModule } from 'src/modules/users/users.module';
 
 @Module({
     imports: [
@@ -43,7 +42,6 @@ import { UsersModule } from 'src/modules/users/users.module';
         AuthModule,
         TiersModule,
         WalletsModule,
-        UsersModule
     ],
     providers: [AdminUsersService, AlgoliaService, OnvoService],
     controllers: [AdminUsersController],

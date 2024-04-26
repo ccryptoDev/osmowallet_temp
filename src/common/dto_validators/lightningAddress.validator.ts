@@ -1,18 +1,19 @@
-import * as lightningPayReq from 'bolt11';
 import {
   registerDecorator,
-  ValidationOptions
+  ValidationArguments,
+  ValidationOptions,
 } from 'class-validator';
+import * as lightningPayReq from 'bolt11';
 
 export function IsLightningAddress(validationOptions?: ValidationOptions) {
-  return function (object: object, propertyName: string) {
+  return function (object: Object, propertyName: string) {
     registerDecorator({
       name: 'isLightningAddress',
       target: object.constructor,
       propertyName: propertyName,
       options: validationOptions,
       validator: {
-        validate(value: any) {
+        validate(value: any, args: ValidationArguments) {
           const isLnurl = value.startsWith('LNURL');
           const isLnInvoice = value.startsWith('lnbc');
           if (isLnInvoice) {

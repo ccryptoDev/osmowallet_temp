@@ -22,7 +22,6 @@ import { TransactionMethodEnum } from "src/common/enums/transactionMethod.enum";
 import { DynamicDtoValidator } from "src/common/dto_validators/dynamic.validator";
 import { TransactionSubtype } from "src/common/enums/transactionSubtype.enum";
 import { RateType, getStableRate } from "src/common/utils/stable-rate.util";
-import { formatDateToSpanish } from "src/common/utils/date-formatter.util";
 import { findAndLockWallet } from "src/common/utils/find-and-lock-wallet";
 import { MainWalletsAccount } from "src/common/enums/main-wallets.enum";
 import { SlackService } from "src/services/slack/slack.service";
@@ -79,7 +78,7 @@ export class StableWithdraw implements Withdraw {
         console.log('amountToUserDebit',amountToUserDebit)
         console.log('osmoAmount',osmoAmountToDebit)
         console.log('fee',fee)
-        return
+        
         await this.manager.transaction('SERIALIZABLE',async transactionalEntityManager => {
             const [userWallet,osmoWallet,osmoFeeWallet] = await Promise.all([
                 findAndLockWallet({entityManager: transactionalEntityManager,coinId: this.coin.id, userId: this.user.id}),
@@ -148,8 +147,7 @@ export class StableWithdraw implements Withdraw {
               email: this.user.email, 
               transactionType: {
                 name: WithdrawalMethodEnum.STABLE_COIN,
-                emoji: SlackEmoji.COIN,
-                type: "WITHDRAW" 
+                emoji: SlackEmoji.COIN
               }, 
               attachmentUrl: "https://firebasestorage.googleapis.com/v0/b/osmowallet.appspot.com/o/logo_cuadrado.png?alt=media&token=955446df-d591-484c-986f-1211a14dad98"
             }) 
@@ -193,14 +191,13 @@ export class StableWithdraw implements Withdraw {
         const emails = process.env.ENV == 'PROD' 
         ? [{email: 'victor@osmowallet.com',name: 'Victor'},{email: 'piero@osmowallet.com',name: 'Piero'}] 
         : [{email: 'as@singularagency.co',name: 'Piero'}]
-        const date = new Date()
         const template = new WithdrawalPendingOsmoTemplate(
             emails,
             user.firstName + ' ' + user.lastName,
             user.email,
             {
                 amount: this.body.amount,currency: this.coin.acronym,
-                date: formatDateToSpanish(date),
+                date: (new Date()).toDateString(),
                 status: Status.PENDING,
                 transactionId: transactionGroup.id
             }
@@ -210,7 +207,7 @@ export class StableWithdraw implements Withdraw {
             {
             amount: amount,
             currency: this.coin.acronym, 
-            date: formatDateToSpanish(date),
+            date: (new Date()).toDateString(),
             status: Status.PENDING,
             transactionId: transactionGroup.id
             },

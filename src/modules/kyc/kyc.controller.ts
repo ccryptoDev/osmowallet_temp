@@ -1,4 +1,4 @@
-import { Controller,Post,Req,Body, Get, ClassSerializerInterceptor, UseInterceptors, UseGuards, Param, ParseUUIDPipe } from '@nestjs/common';
+import { Controller,Post,Req,Body, Get, ClassSerializerInterceptor, UseInterceptors, UseGuards, Param } from '@nestjs/common';
 import { KycService } from './kyc.service';
 import { KycQueueDto } from './dtos/queue.dto';
 import { AuthUser } from '../auth/payloads/auth.payload';
@@ -63,7 +63,7 @@ export class KycController {
     }
 
     @Get('/:id/raw-kyc')
-    async getRawKyc(@Param('id', new ParseUUIDPipe()) id: string){
+    async getRawKyc(@Param(':id') id: string){
         return this.kycService.getRawKyc(id)
     }
 

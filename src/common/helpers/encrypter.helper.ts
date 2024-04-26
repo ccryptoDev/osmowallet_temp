@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import { createDecipheriv, createCipheriv, randomBytes, scrypt, scryptSync } from 'crypto';
 import { promisify } from 'util';
 
@@ -37,8 +36,8 @@ export default class EncrypterHelper{
     }
 
     async encryptPayload(textToEncrypt: string) : Promise<string>{
-      const iv = Buffer.from(process.env.PAYLOAD_ENCRYPTION_IV,'hex');
-      const cipher = createCipheriv('aes-256-ctr', Buffer.from(process.env.PAYLOAD_ENCRYPTION_KEY), iv);
+      let iv = Buffer.from(process.env.PAYLOAD_ENCRYPTION_IV,'hex');
+      let cipher = createCipheriv('aes-256-ctr', Buffer.from(process.env.PAYLOAD_ENCRYPTION_KEY), iv);
       let encrypted = cipher.update(textToEncrypt);
       encrypted = Buffer.concat([encrypted, cipher.final()]);
       return encrypted.toString('hex');
@@ -47,23 +46,10 @@ export default class EncrypterHelper{
 
     async decryptPayload(encrypted: string): Promise<string> {
       const content = encrypted;
-      const iv = Buffer.from(process.env.PAYLOAD_ENCRYPTION_IV,'hex');
+      let iv = Buffer.from(process.env.PAYLOAD_ENCRYPTION_IV,'hex');
       const decipher = createDecipheriv('aes-256-ctr', Buffer.from(process.env.PAYLOAD_ENCRYPTION_KEY), iv);
       let decrypted = decipher.update(Buffer.from(content, 'hex'));
       decrypted = Buffer.concat([decrypted, decipher.final()]);
       return decrypted.toString('utf8');
-    }
-
-    async decryptRocket(rocket: string) {
-      const rocketDecrypted = await this.decryptPayload(rocket)
-      const value = Number.parseFloat(rocketDecrypted)
-      try {
-        if (typeof value !== 'number') {
-          throw new BadRequestException('Unknow error');
-        }
-      } catch (error) {
-        throw new BadRequestException('Unknow error');
-      }
-      return value;
     }
 }

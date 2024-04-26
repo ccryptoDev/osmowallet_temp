@@ -21,8 +21,8 @@ import { SendGridService } from '../send-grid/send-grid.service';
 import { SolfinModule } from '../solfin/solfin.module';
 import { FundingController } from './funding.controller';
 import { FundingService } from './funding.service';
-import { TierFunding } from 'src/entities/tierFunding.entity';
 import { GoogleCloudTasksService } from 'src/services/google-cloud-tasks/google-cloud-tasks.service';
+import { TierFunding } from 'src/entities/tierFunding.entity';
 import { TierUser } from 'src/entities/tierUser.entity';
 
 @Module({

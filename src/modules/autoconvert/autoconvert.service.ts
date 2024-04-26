@@ -6,6 +6,7 @@ import { AuthUser } from '../auth/payloads/auth.payload';
 import { AutoConvertDto } from './dtos/autoconvert.dto';
 import { Coin } from 'src/entities/coin.entity';
 import { User } from 'src/entities/user.entity';
+import { AutoconvertType } from 'src/entities/autoconvertTypes';
 import { CoinEnum } from '../me/enums/coin.enum';
 
 @Injectable()

@@ -3,7 +3,7 @@ import { Wallets } from "./swapTransaction.dto"
 
 export interface RecurrentBuyTransactionData {
     passed: boolean,
-    days: number,
+    periodId: string,
     btcPrice: number,
     coinId: string,
     userId: string,

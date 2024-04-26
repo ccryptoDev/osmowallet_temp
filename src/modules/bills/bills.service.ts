@@ -1,12 +1,13 @@
 import { Injectable,BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Nit } from 'src/entities/bill.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { AuthUser } from '../auth/payloads/auth.payload';
 import { NitDto } from './dtos/nit.dto';
 import { Transaction } from 'src/entities/transaction.entity';
 import { TransactionGroup } from 'src/entities/transactionGroup.entity';
 import { Wallet } from 'src/entities/wallet.entity';
+import axios from 'axios';
 import { Status } from 'src/common/enums/status.enum';
 import { GoogleCloudTasksService } from 'src/services/google-cloud-tasks/google-cloud-tasks.service';
 import { ExternalTask } from 'src/services/google-cloud-tasks/interfaces/externalTask.interface';

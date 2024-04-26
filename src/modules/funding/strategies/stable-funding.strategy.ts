@@ -7,7 +7,6 @@ import { Status } from "src/common/enums/status.enum";
 import { TransactionMethodEnum } from "src/common/enums/transactionMethod.enum";
 import { TransactionType } from "src/common/enums/transactionsType.enum";
 import { TransactionSubtype } from "src/common/enums/transactionSubtype.enum";
-import { formatDateToSpanish } from "src/common/utils/date-formatter.util";
 import { findAndLockWallet } from "src/common/utils/find-and-lock-wallet";
 import { RateType, getStableRate } from "src/common/utils/stable-rate.util";
 import { BlockchainNetwork } from "src/entities/blockchainNetworks.entity";
@@ -40,9 +39,6 @@ import { FundingDto } from "../dtos/funding.dto";
 import { StableFundingDto } from "../dtos/stableFunding.dto";
 import { FundingMethodEnum } from "../enums/fundingMethod.enum";
 import { Funding } from "./funding";
-
-
-
 
 export class StableFunding implements Funding {
     private coin: Coin
@@ -168,8 +164,7 @@ export class StableFunding implements Funding {
                 email: this.user.email,
                 transactionType: {
                     name: FundingMethodEnum.STABLE_COIN,
-                    emoji: SlackEmoji.COIN,
-                    type:  "FUNDING" 
+                    emoji: SlackEmoji.COIN
                 },
                 attachmentUrl: proofData.proofUrl
             })
@@ -188,19 +183,18 @@ export class StableFunding implements Funding {
     private notify(
         transactionGroup: TransactionGroup,
         user: User,
-        amount: number        
-        ){
-        const emails = process.env.ENV == 'PROD' 
-        ? [{email: 'victor@osmowallet.com',name: 'Victor'},{email: 'piero@osmowallet.com',name: 'Piero'}] 
-        : [{email: 'as@singularagency.co',name: 'Piero'}]
-        const date = new Date()
+        amount: number
+    ) {
+        const emails = process.env.ENV == 'PROD'
+            ? [{ email: 'victor@osmowallet.com', name: 'Victor' }, { email: 'piero@osmowallet.com', name: 'Piero' }]
+            : [{ email: 'as@singularagency.co', name: 'Piero' }]
         const template = new FundingPendingOsmoTemplate(
             emails,
             user.firstName + ' ' + user.lastName,
             user.email,
             {
-                amount: amount,currency: this.coin.acronym,
-                date: formatDateToSpanish(date),
+                amount: amount, currency: this.coin.acronym,
+                date: (new Date()).toDateString(),
                 status: Status.PENDING,
                 transactionId: transactionGroup.id
             }
@@ -208,11 +202,11 @@ export class StableFunding implements Funding {
         const confirmationUserTemplate = new FundingPendingTemplate(
             [{ email: user.email, name: user.firstName }],
             {
-            amount: amount,
-            currency: this.coin.acronym, 
-            date: formatDateToSpanish(date),
-            status: Status.PENDING,
-            transactionId: transactionGroup.id
+                amount: amount,
+                currency: this.coin.acronym,
+                date: (new Date()).toDateString(),
+                status: Status.PENDING,
+                transactionId: transactionGroup.id
             },
         )
         this.sendgridService.sendMail(confirmationUserTemplate)
@@ -270,6 +264,7 @@ export class StableFunding implements Funding {
                 },
             }),
             this.manager.findOne(TierUser, {
+                relations: {tier: true},
                 where: {
                     user: {
                         id: this.user.id
@@ -284,7 +279,7 @@ export class StableFunding implements Funding {
         const tierFunding = await this.manager.findOne(TierFunding, {
             where: {
                 fundingMethod: { id: this.body.fundingMethodId },
-                tier: tierUser.tier
+                tier: {id: tierUser.tier.id}
             },
         })
 

@@ -22,7 +22,6 @@ import { EntityManager } from "typeorm";
 import { BankWithdrawDto } from "../dtos/bankWithdraw.dto";
 import { WithdrawDto } from "../dtos/withdraw.dto";
 import { Withdraw } from "./withdraw";
-import { formatDateToSpanish } from "src/common/utils/date-formatter.util";
 import { findAndLockWallet } from "src/common/utils/find-and-lock-wallet";
 import { MainWalletsAccount } from "src/common/enums/main-wallets.enum";
 import { SlackService } from "src/services/slack/slack.service";
@@ -181,10 +180,9 @@ export class BankWithdraw implements Withdraw{
             user.email,
             {amount: this.data.amount, currency: transactionGroup.transactionCoin.acronym, date: (new Date()).toDateString(),status: Status.PENDING,transactionId: transactionGroup.id}
             )
-        const date = new Date()
         const template = new WithdrawalPendingTemplate(
             [{email: user.email,name: user.firstName},],
-            {amount: this.data.amount, currency: transactionGroup.transactionCoin.acronym, date: formatDateToSpanish(date),status: Status.PENDING,transactionId: transactionGroup.id}
+            {amount: this.data.amount, currency: transactionGroup.transactionCoin.acronym, date: (new Date()).toDateString(),status: Status.PENDING,transactionId: transactionGroup.id}
             )
         this.sendGridService.sendMail(osmoTemplate)
         this.sendGridService.sendMail(template)

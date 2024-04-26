@@ -82,7 +82,7 @@ export interface RehiveRecurrentBuy {
   amount: number;
   created: any;
   currency: string;
-  days: number;
+  period: string;
   time: string;
 }
 
@@ -520,7 +520,7 @@ export class AppMigrationService {
         return {
           amount: doc.data()['amount'],
           currency: doc.data()['currency'],
-          days: doc.data()['days'],
+          period: doc.data()['period'],
           created: createdDate,
           time: timeString,
         };
@@ -727,12 +727,14 @@ export class AppMigrationService {
   ) {
     if (rehiveRecurrentBuys.length > 0) {
       const recurrentBuys: RecurrentBuy[] = rehiveRecurrentBuys.map((data) => {
-        const days = data.days
+        const period = this.periods.find(
+          (period) => period.name == data.period,
+        );
         const coin = this.coins.find((coin) => coin.acronym == data.currency);
         return this.recurrentBuyRepository.create({
           user: user,
           amount: data.amount,
-          days: days,
+          period: period,
           coin: coin,
           createdAt: data.created,
           time: data.time,

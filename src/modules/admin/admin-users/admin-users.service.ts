@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    Injectable,
+    InternalServerErrorException,
+    NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as crypto from 'crypto';
@@ -41,8 +46,8 @@ import {
 } from 'typeorm';
 import { GetUserCSVDTO, GetUsersDto } from './dtos/getUsers.dto';
 import { TransactionMetricDto } from './dtos/transactionMetric.dto';
-import { UpdateUsersDto } from './dtos/updateUser.dto';
 import { UsersService } from 'src/modules/users/users.service';
+import { UpdateUsersDto } from './dtos/updateUser.dto';
 import { MyLogger } from 'src/common/loggers/mylogger.logger';
 
 @Injectable()
@@ -66,9 +71,8 @@ export class AdminUsersService {
         private kycService: KycService,
         private authService: AuthService,
         private algoliaService: AlgoliaService,
-        private userService: UsersService,
         private onvoService: OnvoService,
-    ) { }
+    ) {}
 
     private getCSVQuery(query: GetUserCSVDTO) {
         let queryBuilder = this.userRepository
@@ -158,7 +162,9 @@ export class AdminUsersService {
             },
         });
         const tierFeatures = await Promise.all(
-            userLimits.map((userLimit) => this.featureService.getTierFeature(userLimit.feature.id, { sub: id })),
+            userLimits.map((userLimit) =>
+                this.featureService.getTierFeature(userLimit.feature.id, { sub: id }),
+            ),
         );
         return {
             userLimits,
@@ -191,7 +197,11 @@ export class AdminUsersService {
                 subtypeNames = [subtypeNames];
             }
             if (coin.acronym == CoinEnum.SATS && transactionType == TransactionType.SEND) {
-                subtypeNames = ['debit-btc-transfer-ln', 'debit-btc-transfer-ibexpay', 'debit-btc-transfer-onchain'];
+                subtypeNames = [
+                    'debit-btc-transfer-ln',
+                    'debit-btc-transfer-ibexpay',
+                    'debit-btc-transfer-onchain',
+                ];
             }
             if (coin.acronym == CoinEnum.SATS && transactionType == TransactionType.AUTOCONVERT) {
                 subtypeNames = ['credit-btc-autoconvert-sell'];
@@ -212,9 +222,12 @@ export class AdminUsersService {
                 .orderBy('date', 'ASC');
 
             if (query.userId) {
-                queryBuilder.andWhere('transactionGroup.fromUser.id = :userId OR transactionGroup.toUser.id = :userId', {
-                    userId: query.userId,
-                });
+                queryBuilder.andWhere(
+                    'transactionGroup.fromUser.id = :userId OR transactionGroup.toUser.id = :userId',
+                    {
+                        userId: query.userId,
+                    },
+                );
             }
             const rawData = await queryBuilder.getRawMany();
             const data = [];
@@ -238,7 +251,18 @@ export class AdminUsersService {
                 x: endDate.toISOString(),
             };
             data.push(secondDummyDate);
-            const colors = ['#F9DF38', '#F99038', '#7BF938', '#38E5F9', '#387BF9', '#7038F9', '#D038F9', '#FF0000', '#85747F', '#4E7385']; // Add more colors if there are more transaction types
+            const colors = [
+                '#F9DF38',
+                '#F99038',
+                '#7BF938',
+                '#38E5F9',
+                '#387BF9',
+                '#7038F9',
+                '#D038F9',
+                '#FF0000',
+                '#85747F',
+                '#4E7385',
+            ]; // Add more colors if there are more transaction types
             return {
                 type: transactionType,
                 color: colors[i],
@@ -382,49 +406,7 @@ export class AdminUsersService {
     }
 
     async getKyc(id: string) {
-        const verification = await this.kycVerificationRepository.findOne({
-            relations: {
-                verificationSteps: true,
-            },
-            where: {
-                user: { id: id },
-            },
-        });
-        if (!verification) {
-            return {};
-        }
-        const kycUser = await this.kycService.getKycUser(verification.verificationId);
-        if (kycUser.documents.lenght == 0) {
-            return {};
-        }
-        const images = kycUser.documents[0]['photos'];
-        const fields = kycUser.documents[0].fields;
-        const fieldsArray = Object.keys(fields).map((key) => {
-            let separatedKey = key
-                .split(/(?=[A-Z])/)
-                .join(' ')
-                .toLowerCase();
-            separatedKey = separatedKey.charAt(0).toUpperCase() + separatedKey.slice(1);
-            return {
-                name: separatedKey,
-                value: fields[key].value,
-            };
-        });
-        const liveness = kycUser.steps.find((step) => step.id == 'liveness')?.data;
-        const watchlistsSteps = kycUser.steps.find((step) => step.id == 'watchlists')?.data;
-        const watchlists = watchlistsSteps.map((watchlistStep) => {
-            return {
-                name: watchlistStep.watchlist.name,
-                result: watchlistStep.searchResult,
-            };
-        });
-        return {
-            verification,
-            images,
-            liveness,
-            watchlists,
-            fields: fieldsArray,
-        };
+        return await this.kycService.getRawKyc(id);
     }
 
     async rejectKyc(id: string) {
@@ -437,7 +419,6 @@ export class AdminUsersService {
         });
         if (!verification) throw new BadRequestException('Not verification found');
         await this.kycService.rejectValidation(verification.verificationId);
-
     }
 
     async forceVerifyKyc(id: string) {
@@ -460,7 +441,6 @@ export class AdminUsersService {
     }
 
     async forceVerifyEmail(id: string) {
-
         const user = await this.userRepository.findOneBy({ id: id });
         if (!user) throw new BadRequestException('Invalid user');
         const verification = await this.verificationRepository.findOne({
@@ -478,11 +458,9 @@ export class AdminUsersService {
             },
         });
         await this.algoliaService.saveUser(userUpdated);
-
     }
 
     async forceVerifyMobile(id: string) {
-
         const user = await this.userRepository.findOneBy({ id: id });
         if (!user) throw new BadRequestException('Invalid user');
         const verification = await this.verificationRepository.findOne({
@@ -500,11 +478,9 @@ export class AdminUsersService {
             },
         });
         await this.algoliaService.saveUser(userUpdated);
-
     }
 
     async deactivateUser(id: string) {
-
         const user = await this.userRepository.findOneBy({ id: id });
         if (!user) throw new BadRequestException('Invalid user');
         await this.userRepository.update(id, {
@@ -517,11 +493,9 @@ export class AdminUsersService {
             },
         });
         await this.algoliaService.saveUser(userUpdated);
-
     }
 
     async activateUser(id: string) {
-
         const user = await this.userRepository.findOneBy({ id: id });
         if (!user) throw new BadRequestException('Invalid user');
         await this.userRepository.update(id, {
@@ -534,7 +508,6 @@ export class AdminUsersService {
             },
         });
         await this.algoliaService.saveUser(userUpdated);
-
     }
 
     async getUsers(data: GetUsersDto) {
@@ -566,7 +539,7 @@ export class AdminUsersService {
                 totalPages: totalPages,
             };
         } catch (error) {
-            throw new InternalServerErrorException()
+            throw new InternalServerErrorException();
         }
     }
 
@@ -579,7 +552,10 @@ export class AdminUsersService {
             const userCard = await this.userCardModel.findOne({ userId: user.id });
 
             if ((data?.email !== undefined || data?.mobile !== undefined) && userCard) {
-                await this.onvoService.updateCustomer({ email: data?.email, phone: data?.mobile }, userCard.customerId);
+                await this.onvoService.updateCustomer(
+                    { email: data?.email, phone: data?.mobile },
+                    userCard.customerId,
+                );
             }
             if (data.password) {
                 data.password = await this.hashPassword(data.password);

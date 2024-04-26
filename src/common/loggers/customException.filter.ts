@@ -16,8 +16,10 @@ export class CustomExceptionFilter implements ExceptionFilter {
     '/auth/input/verify': true,
     '/auth/session': true,
     '/auth/signup': true,
+    '/auth/signin': true,
     '/auth/pin/verify': true,
     '/auth/refresh-token': true,
+    '/auth/signin/verify-otp': true,
   }
 
   constructor(
@@ -38,6 +40,7 @@ export class CustomExceptionFilter implements ExceptionFilter {
     if (user != undefined) {
       userId = user['sub']
       email = user['email']
+      
     }
     const trace = error.stack ?? '';
     const data: LoggerData = {
@@ -50,11 +53,11 @@ export class CustomExceptionFilter implements ExceptionFilter {
       trace: trace
     };
 
-    if (this.blacklistRoutes[request.url] === undefined || !(error instanceof UnauthorizedException)) 
+    if (this.blacklistRoutes[request.url] === undefined && !(error instanceof UnauthorizedException)) 
       SlackService.errorTransaction(createErrorTemplate({
         channel: SlackChannel.OSMO_STATUS_MONITOR,
         userEmail: email,
-        route: request.url,
+        route: request?.url,
         message: error.message,
         trace: trace
       }))

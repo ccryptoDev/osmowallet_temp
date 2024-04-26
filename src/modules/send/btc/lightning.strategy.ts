@@ -98,9 +98,8 @@ export class Lightning extends Send implements SendBtc {
     }
 
     async sendAutoconvert(data: SendBtcData): Promise<void> {
-        const settings = await this.manager.find(Setting)
         const SATOSHI_TO_BITCOIN_RATIO = Math.pow(10, -8);
-        const MAX_USD_FEE_AMOUNT = parseFloat(settings.find(setting => setting.name == 'sendGloballyCAP').value);
+        const MAX_USD_FEE_AMOUNT = 50;
         const amountSats = this.validateInvoiceExpiration(data)
         const [isOsmoBussiness, coin] = await Promise.all([
             this.isOsmoBussiness(data),

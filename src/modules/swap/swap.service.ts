@@ -22,9 +22,10 @@ import { TransactionFee } from 'src/entities/transactionFee.entity';
 import { RecurrentBuy } from 'src/entities/recurrent.buy.entity';
 import { RecurrentBuyPayload } from './dtos/recurrentBuyPayload.dto';
 import { RecurrentBuyTransactionData } from './dtos/recurrentBuyTransactionData.dto';
-//import { Period } from 'src/entities/period.entity';
+import { Period } from 'src/entities/period.entity';
 import { RecurrentBuyDto } from './dtos/recurrentBuy.dto';
 import { WalletSwap } from './enums/swapWallet.enum';
+import { Address } from 'src/entities/address.entity';
 import { FeaturesService } from '../features/features.service';
 import Decimal from 'decimal.js';
 import { Status } from 'src/common/enums/status.enum';
@@ -39,15 +40,9 @@ import { BalanceUpdaterService } from '../balance-updater/balance-updater.servic
 import { UpdateBalanceTransferType } from '../balance-updater/enums/type.enum';
 import { TransactionSubtype } from 'src/common/enums/transactionSubtype.enum';
 import { TransactionsService } from '../transactions/transactions.service';
-import { differenceInMinutes } from 'date-fns';
 import { findAndLockWallet } from 'src/common/utils/find-and-lock-wallet';
 import { MainWalletsAccount } from 'src/common/enums/main-wallets.enum';
-import { Addresses } from 'src/schemas/addresses.schema';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { CurrencyEnum } from '../ibex/enum/currencies.enum';
 import { Wallet } from 'src/entities/wallet.entity';
-import { Types } from '../ibex/enum/type.enum';
 
 @Injectable()
 export class SwapService {
@@ -64,15 +59,15 @@ export class SwapService {
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(Coin) private coinRepository: Repository<Coin>,
     @InjectRepository(RecurrentBuy) private recurrentBuyRepository: Repository<RecurrentBuy>,
-    //@InjectRepository(Period) private periodRepository: Repository<Period>,
+    @InjectRepository(Period) private periodRepository: Repository<Period>,
     @InjectRepository(Feature) private featureRepository: Repository<Feature>,
-    @InjectModel(Addresses.name) private addressModel: Model<Addresses>,
+    @InjectRepository(Address) private addressRepository: Repository<Address>,
     @InjectRepository(IbexAccount) private ibexAccountRepository: Repository<IbexAccount>,
     private ibexService: IbexService,
     private googleTasksService: GoogleCloudTasksService,
     private pushNotificationService: PushNotificationService,
     private featureService: FeaturesService,
-    private transactionService: TransactionsService,
+    private transactionService: TransactionsService
   ) {}
 
   addToBalanceUpdaterQueue(data: UpdateBalance){
@@ -86,7 +81,6 @@ export class SwapService {
   async createAutoconvertToReceiveTransaction(data: AutoconvertTransaction) {
 
     const toCoin = await this.coinRepository.findOneBy({id: data.payload.toCoinId})
-
     await this.userRepository.manager.transaction(async entityManager => {
       const transactionGroup = entityManager.create(TransactionGroup, {
         fromUser: { id: data.payload.authUser.sub },
@@ -137,7 +131,7 @@ export class SwapService {
       amount: data.amounts.userFiatToCredit,
       coinId: data.payload.toCoinId,
       userId: data.payload.authUser.sub,
-      type: UpdateBalanceTransferType.OSMO_TO_USER
+      type: UpdateBalanceTransferType.USER_TO_OSMO
     })
     const user = await this.userRepository.findOneBy({ id: data.payload.authUser.sub });
     this.pushNotificationService.sendPushToUser(user, {
@@ -219,8 +213,8 @@ export class SwapService {
     });
   }
 
-  async swap(authUser: AuthUser, data: SwapDto) {
-    await this.transactionService.checkTransactionRateLimit(authUser.sub,TransactionType.SWAP)
+  async swap(autUser: AuthUser, data: SwapDto) {
+    await this.transactionService.checkTransactionRateLimit(autUser.sub, TransactionType.SWAP)
     const fromCoin = await this.coinRepository.findOneBy({
       id: data.fromCoinId,
     });
@@ -230,17 +224,17 @@ export class SwapService {
       throw new BadGatewayException('No se puede swappear a la misma moneda');
 
     if (fromCoin.acronym == CoinEnum.SATS && toCoin.acronym != CoinEnum.SATS) {
-      return this.sell(authUser, data, toCoin);
+      return this.sell(autUser, data, toCoin);
     }
 
     if (fromCoin.acronym != CoinEnum.SATS && toCoin.acronym == CoinEnum.SATS) {
       if (data.wallet == WalletSwap.OSMO) {
-        return this.buy(authUser, data, fromCoin);
+        return this.buy(autUser, data, fromCoin);
       }
     }
 
     if (fromCoin.acronym != CoinEnum.SATS && toCoin.acronym != CoinEnum.SATS) {
-      return this.buy(authUser, data, fromCoin, true);
+      return this.buy(autUser, data, fromCoin, true);
     }
   }
 
@@ -337,9 +331,13 @@ export class SwapService {
   async createBuyTransaction(data: SwapTransactionDto, fromCoin: Coin) {
     const [ user, userAddresses ] = await Promise.all([
       this.userRepository.findOneBy({id: data.user.sub}),
-      this.addressModel.findOne({ user: data.user.sub }).exec(),
+      this.addressRepository.findOne({
+        where: { user: {
+          id: data.user.sub
+        } }
+      })
     ])
-    const lnURLDecode = ln.decode(userAddresses.addresses.find(address => address.type == Types.LNURL_PAYER).address);
+    const lnURLDecode = ln.decode(userAddresses.lnUrlPayer);
     const params = await this.ibexService.getParams(lnURLDecode);
     await this.ibexService.payLnURL(params,data.amounts.userSatsAmount * 1000,process.env.IBEX_NATIVE_OSMO_ACCOUNT_ID);
     
@@ -427,7 +425,7 @@ export class SwapService {
     });
     const tierFeature = await this.featureService.getTierFeature(feature.id,authUser)
     let fee = tierFeature.fee;
-    fee = fiatToFiat ? new Decimal(fee).dividedBy(2).toNumber() : new Decimal(fee).toNumber() // when is fiat to fiat the fee should be the half
+    fee = fiatToFiat ? new Decimal(fee).dividedBy(2).toNumber() : new Decimal(fee).toNumber()
     let btcPrice = data.btcPrice;
     await this.userRepository.manager.transaction('SERIALIZABLE',async entityManager => {
       const [userBtcWallet,userFiatWallet,osmoWalletFee] = await Promise.all([
@@ -554,281 +552,354 @@ export class SwapService {
     });
   }
 
-    /// RECURRENT BUY
+  /// RECURRENT BUY
 
-    async deleteRecurrentBuy(authUser: AuthUser, recurrentBuyId: string) {
-        const record = await this.recurrentBuyRepository.findOneBy({
-            id: recurrentBuyId,
-            user: { id: authUser.sub },
-        });
-        if (!record) throw new BadRequestException('No tienes ningun registro con este Id');
+  async deleteRecurrentBuy(authUser: AuthUser, recurrentBuyId: string) {
+    const record = await this.recurrentBuyRepository.findOneBy({
+      id: recurrentBuyId,
+      user: { id: authUser.sub },
+    });
+    if (!record)
+      throw new BadRequestException('No tienes ningun registro con este Id');
 
-        await this.recurrentBuyRepository.remove(record);
+    await this.recurrentBuyRepository.remove(record);
+  }
+
+  async getRecurrentBuys(authUser: AuthUser) {
+    return await this.recurrentBuyRepository.find({
+      relations: { coin: true, period: true },
+      where: { user: { id: authUser.sub } },
+    });
+  }
+
+  async createRecurrentBuy(authUser: AuthUser, data: RecurrentBuyDto) {
+    try {
+      const coin = await this.coinRepository.findOneBy({ id: data.coinId });
+      if (!coin) throw new BadRequestException('Invalid coin');
+      const period = await this.periodRepository.findOneBy({
+        id: data.periodId,
+      });
+      if (!period) throw new BadRequestException('Invalid period');
+
+      const feature = await this.featureRepository.findOneBy({
+        name: TransactionType.RECURRENT_BUY,
+      });
+      const tierFeature = await this.featureService.getTierFeature(feature.id,authUser)
+
+      const amount = data.amount / coin.exchangeRate;
+      if (amount < tierFeature.min || amount > tierFeature.max)
+        throw new BadRequestException('Out of limits');
+      const btcPrice = await this.ibexService.getBtcExchangeRate();
+      await this.buyRecurrentBuy({
+        amount: data.amount,
+        btcPrice: btcPrice.rate,
+        coinId: coin.id,
+        periodId: period.id,
+        userId: authUser.sub,
+      });
+      const user = await this.userRepository.findOneBy({ id: authUser.sub });
+      const currentTime = new Date();
+      currentTime.setUTCSeconds(0);
+      currentTime.setUTCMilliseconds(0);
+      const timeString = currentTime.toISOString().split('T')[1].split('.')[0];
+      const recurrentBuyRecord = this.recurrentBuyRepository.create({
+        amount: data.amount,
+        period: period,
+        coin: coin,
+        user: user,
+        time: timeString,
+      });
+      await this.recurrentBuyRepository.save(recurrentBuyRecord, {
+        reload: true,
+      });
+      return recurrentBuyRecord;
+    } catch (error) {
+      throw error;
     }
+  }
 
-    async getRecurrentBuys(authUser: AuthUser) {
-        const recurrentBuyRecords = await this.recurrentBuyRepository.find({
-            relations: { coin: true },
-            where: { user: { id: authUser.sub } },
-        });
-        return recurrentBuyRecords;
+  /// AUTOMATION
+
+  async processRecurrentBuys() {
+    const currentTime = new Date();
+    currentTime.setUTCSeconds(0);
+    currentTime.setUTCMilliseconds(0);
+    const timeString = currentTime.toISOString().split('T')[1].split('.')[0];
+    const records = await this.recurrentBuyRepository.find({
+      relations: { user: true, period: true, coin: true },
+      where: { time: timeString },
+    });
+    this.filterRecurrentBuys(records, currentTime);
+  }
+
+  private filterByPeriod(
+    record: RecurrentBuy,
+    currentDate: Date,
+    days: number,
+  ) {
+    const msInDay = 24 * 60 * 60 * 1000;
+    const forceDate = record.createdAt;
+    forceDate.setSeconds(0);
+    forceDate.setMilliseconds(0);
+    const diffInDays = Math.round(
+      Math.abs(currentDate.getTime() - forceDate.getTime()) / msInDay,
+    );
+    if (diffInDays % days == 0) {
+      return true;
     }
+    return false;
+  }
 
-    async createRecurrentBuy(authUser: AuthUser, data: RecurrentBuyDto) {
-        try {
-            const coin = await this.coinRepository.findOneBy({ id: data.coinId });
-            if (!coin) throw new BadRequestException('Invalid coin');
+  private async filterRecurrentBuys(
+    records: Array<RecurrentBuy>,
+    currentDate: Date,
+  ) {
+    const finalRecords: RecurrentBuy[] = [];
 
-            const feature = await this.featureRepository.findOneBy({
-                name: TransactionType.RECURRENT_BUY,
-            });
-            const tierFeature = await this.featureService.getTierFeature(feature.id, authUser);
+    const daily = records.filter((record) => record.period.name == '1 days');
+    const weekly = records.filter(
+      (record) =>
+        record.period.name == '7 days' &&
+        this.filterByPeriod(record, currentDate, 7),
+    );
+    const fifteenDays = records.filter(
+      (record) =>
+        record.period.name == '15 days' &&
+        this.filterByPeriod(record, currentDate, 15),
+    );
+    const monthly = records.filter(
+      (record) =>
+        record.period.name == '30 days' &&
+        this.filterByPeriod(record, currentDate, 30),
+    );
 
-            const amount = data.amount / coin.exchangeRate;
-            if (amount < tierFeature.min || amount > tierFeature.max) throw new BadRequestException('Out of limits');
-
-            const btcPrice = await this.ibexService.getBtcExchangeRate();
-
-            await this.buyRecurrentBuy({
-                amount: data.amount,
-                btcPrice: btcPrice.rate,
-                coinId: coin.id,
-                days: data.days,
-                userId: authUser.sub,
-            });
-
-            const user = await this.userRepository.findOneBy({ id: authUser.sub });
-
-            const [hour, minutes] = data.time.split(':');
-            const currentTime = new Date();
-            currentTime.setHours(parseInt(hour));
-            currentTime.setMinutes(parseInt(minutes));
-            currentTime.setSeconds(0);
-            currentTime.setMilliseconds(0);
-            const timeString = this.convertFromDate(currentTime);
-
-            const recurrentBuyRecord = this.recurrentBuyRepository.create({
-                amount: data.amount,
-                days: data.days,
-                coin: coin,
-                user: user,
-                time: timeString,
-            });
-            await this.recurrentBuyRepository.save(recurrentBuyRecord, {
-                reload: true,
-            });
-            return recurrentBuyRecord;
-        } catch (error) {
-            throw error;
-        }
+    finalRecords.push(...daily);
+    finalRecords.push(...weekly);
+    finalRecords.push(...fifteenDays);
+    finalRecords.push(...monthly);
+    if (finalRecords.length > 0) {
+      const btcPrice = (await this.ibexService.getBtcExchangeRate()).rate;
+      await Promise.all(
+        finalRecords.map((record) =>
+          this.addRecurrentBuyToQueue(
+            record.amount,
+            record.coin.id,
+            record.user.id,
+            record.period.id,
+            btcPrice,
+          ),
+        ),
+      );
     }
+  }
 
-    /// AUTOMATION
-    async processRecurrentBuys() {
-        const currentTime = new Date();
-        const timeString = this.convertFromDate(currentTime);
-        const records = await this.recurrentBuyRepository.find({
-            relations: { user: true, coin: true },
-            where: { time: timeString },
+  private async addRecurrentBuyToQueue(
+    amount: number,
+    coinId: string,
+    userId: string,
+    periodId: string,
+    btcPrice: number,
+  ) {
+    const body: RecurrentBuyPayload = {
+      amount: amount,
+      btcPrice: btcPrice,
+      coinId: coinId,
+      periodId: periodId,
+      userId: userId,
+    };
+    this.googleTasksService.createInternalTask(
+      this.recurrentBuyQueue,
+      body,
+      this.recurrentBuyUrl,
+    );
+  }
+
+  /// Manage wallets balances
+  async buyRecurrentBuy(payload: RecurrentBuyPayload) {
+    const feature = await this.featureRepository.findOneBy({
+      name: TransactionType.RECURRENT_BUY,
+    });
+    const tierFeature = await this.featureService.getTierFeature(feature.id,{sub: payload.userId})
+    const coin = await this.coinRepository.findOneBy({
+      id: payload.coinId,
+    });
+    const fee = tierFeature.fee;
+    let btcPrice = payload.btcPrice;
+    let passed: boolean = false;
+    const satCoin = await this.coinRepository.findOneBy({acronym: CoinEnum.SATS})
+    await this.coinRepository.manager.transaction('SERIALIZABLE',async entityManager => {
+      btcPrice = Number(new Decimal(btcPrice).mul(coin.exchangeRate).toFixed(2));
+      const amountBtc = new Decimal(payload.amount).div(btcPrice);
+      const subtotalAmountSats = amountBtc.mul(Math.pow(10, 8)).toDecimalPlaces(2);
+      const totalAmountSats = subtotalAmountSats.sub(subtotalAmountSats.mul(fee)).divToInt(1);
+      const osmoFee = new Decimal(payload.amount).mul(fee).toDecimalPlaces(2);
+      const [userFiatWallet,userBtcWallet,osmoWalletFee] = await Promise.all([
+        findAndLockWallet({entityManager: entityManager, coinId: payload.coinId, userId: payload.userId}),
+        findAndLockWallet({entityManager: entityManager, coinId: satCoin.id, userId: payload.userId}),
+        findAndLockWallet({entityManager: entityManager, coinId: payload.coinId, alias: MainWalletsAccount.FEES})
+      ])
+      if (userFiatWallet.availableBalance >= payload.amount) {
+        passed = true;
+        const osmoWalletFeeUpdate = entityManager.update(Wallet, osmoWalletFee.id, {
+          availableBalance: new Decimal(osmoWalletFee.availableBalance).plus(osmoFee).toNumber(),
+          balance: new Decimal(osmoWalletFee.balance).plus(osmoFee).toNumber(),
         });
 
-        const finalRecords = records.filter(
-            (record) => Math.abs(differenceInMinutes(this.convertFromString(record.time), currentTime)) % (record.days * 24 * 60) === 0,
-        );
-
-        if (finalRecords.length > 0) {
-            const btcPrice = (await this.ibexService.getBtcExchangeRate()).rate;
-            await Promise.all(
-                finalRecords.map(({ amount, coin, user, days }) => this.addRecurrentBuyToQueue(amount, coin.id, user.id, days, btcPrice)),
-            );
-        }
-    }
-
-    /// TESTING QA
-    async processRecurrentBuysTest(time: string) {
-        const timeDate = this.convertFromString(time);
-        const records = await this.recurrentBuyRepository.find({
-            relations: { user: true, coin: true },
-            where: { time },
+        const userFiatWalletUpdate = entityManager.update(Wallet, userFiatWallet.id, {
+          availableBalance: new Decimal(userFiatWallet.availableBalance).minus(payload.amount).toNumber(),
+          balance: new Decimal(userFiatWallet.balance).minus(payload.amount).toNumber(),
         });
 
-        const finalRecords = records.filter(
-            (record) => Math.abs(differenceInMinutes(this.convertFromString(record.time), timeDate)) % (record.days * 24 * 60) === 0,
-        );
-        if (finalRecords.length > 0) {
-            const btcPrice = (await this.ibexService.getBtcExchangeRate()).rate;
-            await Promise.all(
-                finalRecords.map(({ amount, coin, user, days }) => this.addRecurrentBuyToQueue(amount, coin.id, user.id, days, btcPrice)),
-            );
-        }
-    }
-
-    private async addRecurrentBuyToQueue(amount: number, coinId: string, userId: string, days: number, btcPrice: number) {
-        const body: RecurrentBuyPayload = {
-            amount: amount,
-            btcPrice: btcPrice,
-            coinId: coinId,
-            days: days,
-            userId: userId,
-        };
-        await this.googleTasksService.createInternalTask(this.recurrentBuyQueue, body, this.recurrentBuyUrl);
-    }
-
-    /// Manage wallets balances
-    async buyRecurrentBuy(payload: RecurrentBuyPayload) {
-        const feature = await this.featureRepository.findOneBy({
-            name: TransactionType.RECURRENT_BUY,
+        const userBtcWalletUpdate = entityManager.update(Wallet, userBtcWallet.id, {
+          availableBalance: new Decimal(userBtcWallet.availableBalance).plus(totalAmountSats).toNumber(),
+          balance: new Decimal(userBtcWallet.balance).plus(totalAmountSats).toNumber(),
         });
-        const tierFeature = await this.featureService.getTierFeature(feature.id, { sub: payload.userId });
-        const coin = await this.coinRepository.findOneBy({
-            id: payload.coinId,
-        });
-        const fee = tierFeature.fee;
-        let btcPrice = payload.btcPrice;
-        let passed: boolean = false;
-        const satCoin = await this.coinRepository.findOneBy({acronym: CoinEnum.SATS})
-        await this.coinRepository.manager.transaction('SERIALIZABLE', async (entityManager) => {
-            btcPrice = Number(new Decimal(btcPrice).mul(coin.exchangeRate).toFixed(2));
-            const amountBtc = new Decimal(payload.amount).div(btcPrice);
-            const subtotalAmountSats = amountBtc.mul(Math.pow(10, 8)).toDecimalPlaces(2);
-            const totalAmountSats = subtotalAmountSats.sub(subtotalAmountSats.mul(fee)).divToInt(1);
-            const osmoFee = new Decimal(payload.amount).mul(fee).toDecimalPlaces(2);
-            const [userFiatWallet, userBtcWallet, osmoWalletFee] = await Promise.all([
-                findAndLockWallet({entityManager: entityManager, coinId: payload.coinId, userId: payload.userId}),
-                findAndLockWallet({entityManager: entityManager, coinId: satCoin.id, userId: payload.userId}),
-                findAndLockWallet({entityManager: entityManager, coinId: payload.coinId, alias: MainWalletsAccount.FEES})
-            ]);
-            if (userFiatWallet.availableBalance >= payload.amount) {
-                passed = true;
-                await Promise.all([
-                    entityManager.update(Wallet, osmoWalletFee.id, {
-                        availableBalance: new Decimal(osmoWalletFee.availableBalance).plus(osmoFee).toNumber(),
-                        balance: new Decimal(osmoWalletFee.balance).plus(osmoFee).toNumber(),
-                    }),
-                    entityManager.update(Wallet, userFiatWallet.id, {
-                        availableBalance: new Decimal(userFiatWallet.availableBalance).minus(payload.amount).toNumber(),
-                        balance: new Decimal(userFiatWallet.balance).minus(payload.amount).toNumber(),
-                    }),
-                    entityManager.update(Wallet, userBtcWallet.id, {
-                        availableBalance: new Decimal(userBtcWallet.availableBalance).plus(totalAmountSats).toNumber(),
-                        balance: new Decimal(userBtcWallet.balance).plus(totalAmountSats).toNumber(),
-                    }),
-                ]);
-            }
-            const body: RecurrentBuyTransactionData = {
-                userId: payload.userId,
-                coinId: payload.coinId,
-                passed: passed,
-                days: payload.days,
-                balances: {
-                    osmoWalletFeeBalance: osmoWalletFee.availableBalance,
-                    userFiatBalance: userFiatWallet.availableBalance,
-                    userSatsBalance: userBtcWallet.availableBalance,
-                },
-                amounts: {
-                    osmoFiatFeeToCredit: osmoFee.toNumber(),
-                    totalUserFiatToDebit: payload.amount,
-                    totalUserSatsToCredit: totalAmountSats.toNumber(),
-                },
-                wallets: {
-                    userFiatWallet: userFiatWallet.id,
-                    osmoFeeWallet: osmoWalletFee.id,
-                    userSatsWallet: userBtcWallet.id,
-                },
-                btcPrice: payload.btcPrice,
-            };
 
-            await this.googleTasksService.createInternalTask(this.recurrentBuyQueue, body, this.recurrentTransactionBuyUrl);
-        });
-    }
-
-    /// Create only transactions
-    async createRecurrentBuyTransactions(data: RecurrentBuyTransactionData) {
-        const [user] = await Promise.all([
-            this.userRepository.findOneBy({
-                id: data.userId,
-            }),
+        await Promise.all([
+          osmoWalletFeeUpdate,
+          userFiatWalletUpdate,
+          userBtcWalletUpdate,
         ]);
-        const status: Status = data.passed ? Status.COMPLETED : Status.FAILED;
+      }
+      const body: RecurrentBuyTransactionData = {
+        userId: payload.userId,
+        coinId: payload.coinId,
+        passed: passed,
+        periodId: payload.periodId,
+        balances: {
+          osmoWalletFeeBalance: osmoWalletFee.availableBalance,
+          userFiatBalance: userFiatWallet.availableBalance,
+          userSatsBalance: userBtcWallet.availableBalance,
+        },
+        amounts: {
+          osmoFiatFeeToCredit: osmoFee.toNumber(),
+          totalUserFiatToDebit: payload.amount,
+          totalUserSatsToCredit: totalAmountSats.toNumber(),
+        },
+        wallets: {
+          userFiatWallet: userFiatWallet.id,
+          osmoFeeWallet: osmoWalletFee.id,
+          userSatsWallet: userBtcWallet.id,
+        },
+        btcPrice: payload.btcPrice,
+      };
 
+      this.googleTasksService.createInternalTask(
+        this.recurrentBuyQueue,
+        body,
+        this.recurrentTransactionBuyUrl,
+      );
+    });
+  }
+
+  
+
+
+  /// Create only transactions
+  async createRecurrentBuyTransactions(data: RecurrentBuyTransactionData) {
+
+    const [user] = await Promise.all([
+      this.userRepository.findOneBy({
+        id: data.userId
+      }),
+    ])
+    const status: Status = data.passed ? Status.COMPLETED : Status.FAILED
+
+    if (data.passed) {
+      const userAddresses = await this.addressRepository.findOne({
+        where: {
+          user: { id: data.userId },
+        },
+      });
+      if(!userAddresses) return;
+      const lnURLDecode = ln.decode(userAddresses.lnUrlPayer);
+      const params = await this.ibexService.getParams(lnURLDecode);
+      await this.ibexService.payLnURL(
+        params,
+        data.amounts.totalUserSatsToCredit * 1000,
+        process.env.IBEX_NATIVE_OSMO_ACCOUNT_ID,
+      );
+    }
+    try {
+      await this.coinRepository.manager.transaction(async entityManager => {
+        const transactionGroup = entityManager.create(TransactionGroup, {
+          fromUser: { id: data.userId },
+          status: status,
+          transactionCoin: { id: data.coinId },
+          type: TransactionType.RECURRENT_BUY,
+          btcPrice: data.btcPrice,
+        });
+        await entityManager.insert(TransactionGroup, transactionGroup);
+        const userFiatTransaction = entityManager.create(Transaction, {
+          transactionGroup: transactionGroup,
+          amount: data.amounts.totalUserFiatToDebit,
+          wallet: { id: data.wallets.userFiatWallet },
+          balance: data.balances.userFiatBalance,
+          subtype: TransactionSubtype.DEBIT_FIAT_BUY,
+        });
+        const userSatsTransaction = entityManager.create(Transaction, {
+          transactionGroup: transactionGroup,
+          amount: data.amounts.totalUserSatsToCredit,
+          wallet: { id: data.wallets.userSatsWallet },
+          balance: data.balances.userSatsBalance,
+          subtype: TransactionSubtype.CREDIT_BTC_BUY,
+        });
+        const osmoFeeTransaction = entityManager.create(Transaction, {
+          transactionGroup: transactionGroup,
+          amount: data.amounts.osmoFiatFeeToCredit,
+          wallet: { id: data.wallets.osmoFeeWallet },
+          balance: data.balances.osmoWalletFeeBalance,
+          subtype: TransactionSubtype.FEE_BUY,
+        });
+        await entityManager.insert(Transaction, [
+          userFiatTransaction,
+          userSatsTransaction,
+          osmoFeeTransaction,
+        ]);
+        const fee = entityManager.create(TransactionFee, {
+          amount: data.amounts.osmoFiatFeeToCredit,
+          coin: { id: data.coinId },
+          transactionGroup: transactionGroup,
+        });
+        await entityManager.insert(TransactionFee, fee);
+        let message =
+          '⚠️ Tu compra recurrente no se efectuó por falta de saldo ⚠️';
         if (data.passed) {
-            const userAddresses = await this.addressModel.findOne({ user: data.userId })
-
-            if (!userAddresses) return;
-            const lnURLDecode = ln.decode(userAddresses.addresses.find(address => address.type === Types.LNURL_PAYER).address);
-            const params = await this.ibexService.getParams(lnURLDecode);
-            await this.ibexService.payLnURL(params, data.amounts.totalUserSatsToCredit * 1000, process.env.IBEX_NATIVE_OSMO_ACCOUNT_ID);
+          const fromCoin = await this.coinRepository.findOneBy({
+            id: data.coinId,
+          });
+          const period = await this.periodRepository.findOneBy({
+            id: data.periodId,
+          });
+          message = `💸 Tu compra recurrente ${this.getPeriod(
+            period,
+          )} ha sido realizada con éxito por un monto de ${data.amounts.totalUserFiatToDebit.toFixed(
+            2,
+          )} ${fromCoin.acronym} 💸`;
         }
-        try {
-            await this.coinRepository.manager.transaction(async (entityManager) => {
-                const transactionGroup = entityManager.create(TransactionGroup, {
-                    fromUser: { id: data.userId },
-                    status: status,
-                    transactionCoin: { id: data.coinId },
-                    type: TransactionType.RECURRENT_BUY,
-                    btcPrice: data.btcPrice,
-                });
-                await entityManager.insert(TransactionGroup, transactionGroup);
-                const userFiatTransaction = entityManager.create(Transaction, {
-                    transactionGroup: transactionGroup,
-                    amount: data.amounts.totalUserFiatToDebit,
-                    wallet: { id: data.wallets.userFiatWallet },
-                    balance: data.balances.userFiatBalance,
-                    subtype: TransactionSubtype.DEBIT_FIAT_BUY,
-                });
-                const userSatsTransaction = entityManager.create(Transaction, {
-                    transactionGroup: transactionGroup,
-                    amount: data.amounts.totalUserSatsToCredit,
-                    wallet: { id: data.wallets.userSatsWallet },
-                    balance: data.balances.userSatsBalance,
-                    subtype: TransactionSubtype.CREDIT_BTC_BUY,
-                });
-                const osmoFeeTransaction = entityManager.create(Transaction, {
-                    transactionGroup: transactionGroup,
-                    amount: data.amounts.osmoFiatFeeToCredit,
-                    wallet: { id: data.wallets.osmoFeeWallet },
-                    balance: data.balances.osmoWalletFeeBalance,
-                    subtype: TransactionSubtype.FEE_BUY,
-                });
-                await entityManager.insert(Transaction, [userFiatTransaction, userSatsTransaction, osmoFeeTransaction]);
-                const fee = entityManager.create(TransactionFee, {
-                    amount: data.amounts.osmoFiatFeeToCredit,
-                    coin: { id: data.coinId },
-                    transactionGroup: transactionGroup,
-                });
-                await entityManager.insert(TransactionFee, fee);
-                let message = '⚠️ Tu compra recurrente no se efectuó por falta de saldo ⚠️';
-                if (data.passed) {
-                    const fromCoin = await this.coinRepository.findOneBy({
-                        id: data.coinId,
-                    });
-                    message = `💸 Tu compra recurrente cada ${
-                        data.days === 1 ? 'día' : 'días'
-                    }  ha sido realizada con éxito por un monto de ${data.amounts.totalUserFiatToDebit.toFixed(2)} ${fromCoin.acronym} 💸`;
-                }
-                await this.pushNotificationService.sendPushToUser(user, {
-                    title: 'Compra Recurrente',
-                    message: message,
-                    data: {
-                        route: MobileRoutePaths.Transactions,
-                    },
-                });
-            });
-        } catch (error) {
-            throw error;
-        }
+        this.pushNotificationService.sendPushToUser(user, {
+          title: 'Compra Recurrente',
+          message: message,
+          data: {
+            route: MobileRoutePaths.Transactions,
+          },
+        });
+      });
+    } catch (error) {
+      throw error;
     }
+  }
 
-    private convertFromDate(currentTime: Date) {
-        currentTime.setUTCSeconds(0);
-        currentTime.setUTCMilliseconds(0);
-        return currentTime.toISOString().split('T')[1].split('.')[0];
+  private getPeriod(period: Period) {
+    switch (period.name) {
+      case '1 days':
+        return 'daily';
+      case '7 days':
+        return 'weekly';
+      case '15 days':
+        return 'biweekly';
+      case '30 days':
+        return 'monthly';
     }
-
-    private convertFromString(timeString: string) {
-        const [hours, minutes, seconds] = timeString.split(':');
-        const time = new Date();
-        time.setHours(+hours, +minutes, +seconds, 0);
-        return time;
-    }
+  }
 }

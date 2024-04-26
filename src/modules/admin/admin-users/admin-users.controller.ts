@@ -81,7 +81,10 @@ export class AdminUsersController {
     }
 
     @Get('/:id/transactions')
-    getUserTransactions(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Query() query: GetTransactionsDto) {
+    getUserTransactions(
+        @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+        @Query() query: GetTransactionsDto,
+    ) {
         return this.adminUsersService.getTransactionsByUser(id, query);
     }
 
@@ -141,7 +144,10 @@ export class AdminUsersController {
     }
 
     @Patch(':id')
-    updateUser(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Body() updateUsersDto: UpdateUsersDto) {
+    updateUser(
+        @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+        @Body() updateUsersDto: UpdateUsersDto,
+    ) {
         return this.adminUsersService.updateUser(id, updateUsersDto);
     }
 }

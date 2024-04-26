@@ -41,7 +41,6 @@ import { TransactionSubtype } from 'src/common/enums/transactionSubtype.enum';
 import { OnChainTransactionDto } from './dtos/onchain.dto';
 import { Preference } from 'src/entities/preference.entity';
 import { findAndLockWallet } from 'src/common/utils/find-and-lock-wallet';
-import { CurrencyEnum } from '../ibex/enum/currencies.enum';
 import { Wallet } from 'src/entities/wallet.entity';
 
 @Injectable()
@@ -115,7 +114,7 @@ export class WebhooksService {
 
 
   //ONCHAIN
-  async receiveOnChain(data: OnChainTransactionDto, currency: CurrencyEnum) {
+  async receiveOnChain(data: OnChainTransactionDto) {
     if (data.webhookSecret != process.env.IBEX_WEBHOOK_SECRET) throw new UnauthorizedException();
     const ibexAcount = await this.ibexAccountRepository.findOne({
       relations: {
@@ -136,7 +135,7 @@ export class WebhooksService {
                 user: {id: user.id}
               }
             }) 
-            if(userPreference.dynamicOnchainAddress) this.ibexService.createOnchainAddress(data.transaction.accountId, currency)
+            if(userPreference.dynamicOnchainAddress) this.ibexService.createOnchainAddress(data.transaction.accountId)
           }))
         break;
       case OnChainStatuses.MEMPOOL: 
@@ -499,7 +498,7 @@ export class WebhooksService {
     }
   }
 
-  async storeLnReceivedMSat(data: LightningInvoiceDto, currency: CurrencyEnum) {
+  async storeLnReceivedMSat(data: LightningInvoiceDto) {
     if (data.webhookSecret != process.env.IBEX_WEBHOOK_SECRET) throw new UnauthorizedException();
     const accountId = data.transaction.accountId;
     const ibexAccount = await this.ibexAccountRepository.findOne({
@@ -529,7 +528,7 @@ export class WebhooksService {
   }
 
 
-  private async storeSats(user: User,amount: number,data: LightningInvoiceDto): Promise<TransactionGroup> {
+  private async storeSats(user: User,amount: number,data: LightningInvoiceDto,): Promise<TransactionGroup> {
     const btcPrice = (await this.ibexService.getBtcExchangeRate()).rate;
     const lastHistoricRate = (
       await this.historicRateRepository.find({

@@ -38,10 +38,10 @@ import { GenerateInvoiceFromEmail } from './dtos/generateInvoice.dto';
 import axios, { isAxiosError } from 'axios';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { TransactionsService } from '../transactions/transactions.service';
-import { TransactionType } from 'src/common/enums/transactionsType.enum';
 import { findAndLockWallet } from 'src/common/utils/find-and-lock-wallet';
 import { MainWalletsAccount } from 'src/common/enums/main-wallets.enum';
 import { CoinsService } from '../coins/coins.service';
+import { TransactionType } from 'src/common/enums/transactionsType.enum';
 
 @Injectable()
 export class SendService {

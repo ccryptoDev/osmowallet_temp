@@ -14,7 +14,7 @@ export interface OnvoCheckoutSuccess {
     customer: {
       id: string;
       name: string;
-      phone: number;
+      phone: string;
       email: string;
     };
     lineItems: [

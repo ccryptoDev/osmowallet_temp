@@ -47,6 +47,8 @@ import { GoogleCloudTasksService } from 'src/services/google-cloud-tasks/google-
 import { UsersModule } from '../users/users.module';
 import { KycModule } from '../kyc/kyc.module';
 import { FundingMethod } from 'src/entities/fundingMethod.entity';
+import { UserReferralSource } from 'src/entities/user.referral.source.entity';
+import { ReferralSource } from 'src/entities/referral.source.entity';
 
 @Module({
   imports: [JwtModule.register({}),
@@ -76,6 +78,8 @@ import { FundingMethod } from 'src/entities/fundingMethod.entity';
     Tier,
     TierUser,
     FundingMethod,
+    UserReferralSource,
+    ReferralSource
   ]),
   IbexModule,
   ReferralModule,

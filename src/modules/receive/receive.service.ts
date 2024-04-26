@@ -5,7 +5,7 @@ import { Transaction } from 'src/entities/transaction.entity';
 import { User } from 'src/entities/user.entity';
 import { Repository } from 'typeorm';
 import { IbexService } from '../ibex/ibex.service';
-import { InvoiceDto, InvoiceDtoV2 } from './dtos/invoice.dto';
+import { InvoiceDto } from './dtos/invoice.dto';
 import { ScanDto } from './dtos/scan.dto';
 import { TransactionGroup } from 'src/entities/transactionGroup.entity';
 import { TransactionType } from 'src/common/enums/transactionsType.enum';
@@ -129,13 +129,17 @@ export class ReceiveService {
        return {amount: amount};
     }
 
-    async generateInvoice(authUser: AuthUser, data: InvoiceDto | InvoiceDtoV2){
-        const encryptedPayload = await this.encrypterHelper.encryptPayload(data.btcPrice.toString())
-        const user = await this.userRepository.findOneBy({id:authUser.sub})
-        if(!user) throw new NotFoundException('Usuario inválido')
-        const ibexAccount = await this.ibexAccountRepository.findOneBy({user:{id:authUser.sub}})
-        if(!ibexAccount) throw new NotFoundException('Cuenta inválida')            
-        const invoiceResponse = await this.ibexService.generateInvoice(ibexAccount.account,data.amountSats,encryptedPayload)
-        return {address: invoiceResponse.invoice.bolt11}
+    async generateInvoice(authUser: AuthUser, data: InvoiceDto){
+        try{
+            const encryptedPayload = await this.encrypterHelper.encryptPayload(data.btcPrice.toString())
+            const user = await this.userRepository.findOneBy({id:authUser.sub})
+            if(!user) throw new NotFoundException('Usuario inválido')
+            const ibexAccount = await this.ibexAccountRepository.findOneBy({user:{id:authUser.sub}})
+            if(!ibexAccount) throw new NotFoundException('Cuenta inválida')            
+            const invoiceResponse = await this.ibexService.generateInvoice(ibexAccount.account,data.amountSats,encryptedPayload)
+            return {address: invoiceResponse.invoice.bolt11}
+        }catch(error){
+            throw error
+        }
     }
 }

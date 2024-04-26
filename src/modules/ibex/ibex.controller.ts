@@ -1,11 +1,8 @@
-import { Controller, Post, Body, Query, Get, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { IbexService } from './ibex.service';
 import { CreateIbexAddressesDto } from './dtos/create-addresses.dto';
 import { CreateIbexAccountDto } from './dtos/create-account.dto';
 import { CreateIbexUsernameDto } from './dtos/create-username.dto';
-import { User } from 'src/common/decorators/user.decorator';
-import { AuthUser } from '../auth/payloads/auth.payload';
-import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 @Controller('ibex')
 export class IbexController {
     constructor(private ibexService: IbexService) { }
@@ -28,16 +25,5 @@ export class IbexController {
     @Post('/addresses')
     createAddress(@Body() body: CreateIbexAddressesDto) {
         return this.ibexService.createAddresses(body.ibexAccountId)
-    }
-
-    @UseGuards(AccessTokenGuard)
-    @Get('/addresses')
-    getAddress(@User() user: AuthUser){
-        return this.ibexService.getAddresses(user)
-    }
-
-    @Post('')
-    async ibexWebhook(@Query() query: string) {
-        console.log('Query Params:', query);
     }
 }

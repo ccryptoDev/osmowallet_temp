@@ -1,24 +1,15 @@
-import { IsNotEmpty, IsNumber, IsPositive, IsString, IsUUID, Max, Min } from 'class-validator';
+import { IsPort, IsPositive, IsUUID } from "class-validator";
+
 
 export class RecurrentBuyDto {
+
     @IsPositive()
-    amount: number;
+    amount: number
 
     @IsUUID()
-    coinId: string;
+    coinId: string
 
-    @IsNumber()
-    @Min(1)
-    @Max(999)
-    days: number;
+    @IsUUID()
+    periodId: string
 
-    @IsString()
-    @IsNotEmpty()
-    time: string;
-}
-
-export class ProcessRecurrentBuyDtoTest {
-    @IsNotEmpty()
-    @IsString()
-    time: string
 }

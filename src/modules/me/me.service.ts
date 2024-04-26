@@ -356,18 +356,4 @@ export class MeService {
       throw error;
     }
   }
-  
-  // async updateJoinMethod(authUser: AuthUser, data: JoinMethod) {
-  //   try {
-  //     const user = await this.userRepository.findOneBy({ id: authUser.sub });
-  //     // if(user) throw new BadRequestException('Este email ya existe');
-        
-  //     await this.userRepository.update(authUser.sub, {
-  //       joinMethod: data,
-  //     });
-      
-  //   } catch (error) {
-  //     throw error;
-  //   }    
-  // }
 }

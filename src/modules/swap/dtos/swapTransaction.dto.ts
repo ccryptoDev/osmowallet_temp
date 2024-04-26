@@ -1,7 +1,7 @@
-import { TransactionType } from "src/common/enums/transactionsType.enum";
 import { AuthUser } from "src/modules/auth/payloads/auth.payload";
-import { WalletSwap } from "../enums/swapWallet.enum";
 import { SwapDto } from "./swap.dto";
+import { TransactionType } from "src/common/enums/transactionsType.enum";
+import { WalletSwap } from "../enums/swapWallet.enum";
 
 
 export interface SwapTransactionDto{

@@ -7,8 +7,6 @@ export class ScanDto{
     @IsNotEmpty()
     address: string
 
-    @IsNotEmpty()
-    rocket: any
-
-    btcPrice?: number
+    @IsNumber()
+    btcPrice: number
 }

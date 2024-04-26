@@ -30,7 +30,7 @@ export class CoinsService {
         private ibexService: IbexService,
         private redisService: RedisService,
     ){
-        //this.getCRCExchangeRates()
+        //this.updateExchangesRates()
     }
 
     async getLastHistoricRateId() : Promise<string>{
@@ -77,6 +77,7 @@ export class CoinsService {
                 'sell': new Decimal(parseFloat(ventaNode.documentElement.getElementsByTagName('NUM_VALOR')[0].childNodes[0].nodeValue).toFixed(2)).toNumber()
             } as BccrRate;
         }));
+        console.log(response)
         return response
     }
 
