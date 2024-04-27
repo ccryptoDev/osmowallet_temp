@@ -496,19 +496,23 @@ export class AuthService {
       // create New User
       newUser = transactionalEntityManager.create(User, signUpDto);
       await transactionalEntityManager.insert(User, newUser);
-      
-      // get Referal Source
-      const referralSource = referralSources.filter(source => source.id === signUpDto.referralSourceId);
 
-      if (referralSource.length > 0)  {
-        // Add UserReferralSource
-        const userReferralSource = transactionalEntityManager.create(UserReferralSource, {
-          user: newUser,
-          referralSource: referralSource[0]
-        })
+      for (const referralSourceId of signUpDto.referralSourceIds) {
 
-        await transactionalEntityManager.insert(UserReferralSource, userReferralSource);
+        // get Referal Source
+        const referralSource = referralSources.filter(source => source.id === referralSourceId);
+  
+        if (referralSource.length > 0)  {
+          // Add UserReferralSource
+          const userReferralSource = transactionalEntityManager.create(UserReferralSource, {
+            user: newUser,
+            referralSource: referralSource[0]
+          })
+  
+          await transactionalEntityManager.insert(UserReferralSource, userReferralSource);
+        }
       }
+      
 
       const account = transactionalEntityManager.create(Account, {
         user: newUser,

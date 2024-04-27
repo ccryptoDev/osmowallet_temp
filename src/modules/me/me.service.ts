@@ -331,26 +331,58 @@ export class MeService {
   async updateReferralSource(authUser: AuthUser, data: UpdateReferralSourceDto) {
     try {
       const user = await this.userRepository.findOneBy({ id: authUser.sub });
-      const userReferralSource = await this.userReferralSourceRepository.findOneBy({ user: user });
+      const userReferralSources = await this.userReferralSourceRepository.find({
+        where: {
+          user: user,
+        },
+      });
 
-      const referralSource = await this.referralSourceRepository.findOneBy({ id: data.referralSourceId });
+      // Remove all records about the user
+      var promises = [];
+      for (const userReferralSource of userReferralSources) {
 
-      if (userReferralSource) { // update
-
-        await this.userReferralSourceRepository.update(userReferralSource.id, {
-          user,
-          referralSource
+        const promise = new Promise(async (resolve, reject) => {
+          await this.userReferralSourceRepository.remove(userReferralSource);
+          resolve(true);
         });
 
-      } else { // create new
-
-        const userReferralSourceNew = this.userReferralSourceRepository.create({
-          user,
-          referralSource
-        });
-        await this.userReferralSourceRepository.insert(userReferralSourceNew);
-
+        promises.push(promise);
       }
+      
+      Promise.all(promises).then(async(values) => {
+        const referralSources = await this.referralSourceRepository.find({
+          where: {
+            id: In(data.referralSourceIds)
+          } 
+        });
+
+        for (const referralSource of referralSources) {
+          const userReferralSourceNew = this.userReferralSourceRepository.create({
+            user,
+            referralSource
+          });
+          await this.userReferralSourceRepository.insert(userReferralSourceNew);
+        }
+
+      })
+
+
+      // if (userReferralSource) { // update
+
+      //   await this.userReferralSourceRepository.update(userReferralSource.id, {
+      //     user,
+      //     referralSource
+      //   });
+
+      // } else { // create new
+
+      //   const userReferralSourceNew = this.userReferralSourceRepository.create({
+      //     user,
+      //     referralSource
+      //   });
+      //   await this.userReferralSourceRepository.insert(userReferralSourceNew);
+
+      // }
       
     } catch (error) {
       throw error;
