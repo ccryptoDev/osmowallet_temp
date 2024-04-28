@@ -510,7 +510,6 @@ export class AuthService {
           await transactionalEntityManager.insert(UserReferralSource, userReferralSource);
         }
       }
-      
 
       const account = transactionalEntityManager.create(Account, {
         user: newUser,

@@ -20,6 +20,7 @@ export class SignUpDto extends AuthDto{
     @IsISO31661Alpha2()
     residence: string
 
+    @IsString()
     referralSourceIds: string[]
 
   }

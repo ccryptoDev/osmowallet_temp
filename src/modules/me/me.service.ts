@@ -338,14 +338,14 @@ export class MeService {
       });
 
       // Remove all records about the user
-      var promises = [];
+      const promises = [];
       for (const userReferralSource of userReferralSources) {
-
-        const promise = new Promise(async (resolve, reject) => {
-          await this.userReferralSourceRepository.remove(userReferralSource);
-          resolve(true);
+        const promise = new Promise((resolve, reject) => {
+          this.userReferralSourceRepository
+            .remove(userReferralSource)
+            .then(() => resolve(true))
+            .catch(reject);
         });
-
         promises.push(promise);
       }
       
@@ -355,7 +355,6 @@ export class MeService {
             id: In(data.referralSourceIds)
           } 
         });
-
         for (const referralSource of referralSources) {
           const userReferralSourceNew = this.userReferralSourceRepository.create({
             user,
@@ -363,27 +362,7 @@ export class MeService {
           });
           await this.userReferralSourceRepository.insert(userReferralSourceNew);
         }
-
       })
-
-
-      // if (userReferralSource) { // update
-
-      //   await this.userReferralSourceRepository.update(userReferralSource.id, {
-      //     user,
-      //     referralSource
-      //   });
-
-      // } else { // create new
-
-      //   const userReferralSourceNew = this.userReferralSourceRepository.create({
-      //     user,
-      //     referralSource
-      //   });
-      //   await this.userReferralSourceRepository.insert(userReferralSourceNew);
-
-      // }
-      
     } catch (error) {
       throw error;
     }
