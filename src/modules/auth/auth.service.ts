@@ -73,7 +73,7 @@ import { FundingTransactionLimit } from 'src/entities/fundingTransactionLimits.e
 import { FundingMethod } from 'src/entities/fundingMethod.entity';
 import { ReferralSource } from 'src/entities/referral.source.entity';
 import { UserReferralSource } from 'src/entities/user.referral.source.entity';
-import { HowKnowoutDto } from './dto/howKnowOut.dto';
+import { HowFindoutUsDto } from './dto/howFindoutUs.dto';
 
 @Injectable()
 export class AuthService {
@@ -579,38 +579,25 @@ export class AuthService {
 
   }
 
-  async howFindOut(howFindOutDto: HowKnowoutDto): Promise<any> {
+  async howFindoutUs(howFindoutUsDto: HowFindoutUsDto): Promise<any> {
     const app = await this.appRepository.findOneBy({
-      clientId: howFindOutDto.clientId,
-      clientSecret: howFindOutDto.clientSecret,
+      clientId: howFindoutUsDto.clientId,
+      clientSecret: howFindoutUsDto.clientSecret,
     });
     if (!app) throw new UnauthorizedException();
     if (!app.name.toLowerCase().includes('osmo')) throw new UnauthorizedException();
 
-    const [features, referralSources] = await Promise.all([
-      this.featureRepository.find({
-        where: { name: In([FeatureEnum.FUNDING, FeatureEnum.WITHDRAW]) },
-      }),
-      this.referralSourceRepository.find(),
-    ]);
+    const referralSources = await this.referralSourceRepository.findBy({ id: In(howFindoutUsDto.referralSourceIds) })
 
-    const userReferralSource = new UserReferralSource();
-    userReferralSource.email = howFindOutDto.email;
-    userReferralSource.mobile = howFindOutDto.mobile;
+    const newUserReferralSource = this.userReferralSourceRepository.create({
+      email: howFindoutUsDto.email,
+      mobile: howFindoutUsDto.mobile,
+      referralSources: referralSources
+    })
 
-    const userReferralResources = referralSources.filter(rs => howFindOutDto.referralSourceIds.find(rsId => rsId == rs.id))
+    await this.userReferralSourceRepository.save(newUserReferralSource)
 
-
-    userReferralSource.referralSources = [...userReferralResources];
-
-    await this.userReferralSourceRepository.save(userReferralSource);
-
-    // Retrieve a UserReferralSource and its associated ReferralSources
-    const savedUserReferralSource = await this.userReferralSourceRepository.findOne({
-      where: [{email: howFindOutDto.email}, {mobile: howFindOutDto.mobile}],
-      relations: ['referralSources'],
-    });
-    return savedUserReferralSource;
+    return newUserReferralSource;
   }
 
   private async createIbexAccount(user: User) {
