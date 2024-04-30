@@ -2,16 +2,15 @@ import { IsEmail, IsISO31661Alpha2, IsNotEmpty, IsString, ValidateIf } from "cla
 import { IsMobileValid } from "src/common/dto_validators/mobile.validator"
 import { AuthDto } from "./auth.dto"
 
-export class HowKnowoutDto extends AuthDto{
+export class HowKnowoutDto extends AuthDto {
+  @IsEmail()
+  @ValidateIf(o => o.mobile == undefined)
+  email: string
 
-    @IsEmail()
-    @ValidateIf(o => o.mobile == undefined)
-    email: string
+  @IsMobileValid({message: 'Este no es un número de teléfono válido'})
+  @ValidateIf(o => o.email == undefined)
+  mobile: string
 
-    @ValidateIf(o => o.mobile == undefined)
-    mobile: string
-
-    @IsString()
-    referralSourceIds: string[]
-
-  }
+  @IsString()
+  referralSourceIds: string[]
+}
