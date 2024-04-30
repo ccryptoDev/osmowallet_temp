@@ -24,11 +24,7 @@ import { SignupOtpDto } from './dto/signupOtp.dto';
 import { CreateUsaUserDto } from './dto/usaUser.dto';
 import { VerifyEmailValid } from './dto/verifyEmailValid.dto';
 import { AuthUser } from './payloads/auth.payload';
-<<<<<<< HEAD
 import { HowFindoutUsDto } from './dto/howFindoutUs.dto';
-=======
-import { HowKnowoutDto } from './dto/howKnowOut.dto';
->>>>>>> dev
 
 @Controller('auth')
 export class AuthController {
