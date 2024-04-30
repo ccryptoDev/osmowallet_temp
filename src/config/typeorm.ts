@@ -5,12 +5,14 @@ import { config as dotenvConfig } from 'dotenv';
 import { DataSource, DataSourceOptions } from "typeorm";
 dotenvConfig({ path: '.env.development' });
 
+console.log('database',process.env.DATABASE_URL)
+
 export const config: TypeOrmModuleOptions = {
     type: 'cockroachdb',
     url: new URL(process.env.DATABASE_URL).toString(),
     entities: ["dist/**/*.entity{.ts,.js}"],
     migrations: ["dist/migrations/*{.ts,.js}"],
-    ssl: true,    
+    ssl: false,    
     autoLoadEntities: true,
     synchronize: false,
     maxTransactionRetries: 100,

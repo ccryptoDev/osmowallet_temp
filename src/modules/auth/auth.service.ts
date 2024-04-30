@@ -73,6 +73,7 @@ import { FundingTransactionLimit } from 'src/entities/fundingTransactionLimits.e
 import { FundingMethod } from 'src/entities/fundingMethod.entity';
 import { ReferralSource } from 'src/entities/referral.source.entity';
 import { UserReferralSource } from 'src/entities/user.referral.source.entity';
+import { HowKnowoutDto } from './dto/howKnowOut.dto';
 
 @Injectable()
 export class AuthService {
@@ -98,6 +99,7 @@ export class AuthService {
     @InjectRepository(Tier) private tierRepository: Repository<Tier>,
     @InjectRepository(TierUser) private tierUserRepository: Repository<TierUser>,
     @InjectRepository(FundingMethod) private fundingMethodRepository: Repository<FundingMethod>,
+    @InjectRepository(UserReferralSource) private userReferralSourceRepository: Repository<UserReferralSource>,
     @InjectRepository(ReferralSource) private referralSourceRepository: Repository<ReferralSource>,
     @InjectModel(UsaUser.name) private usaUserModel: Model<UsaUser>,
     private ibexService: IbexService,
@@ -127,12 +129,12 @@ export class AuthService {
   private CREATE_IBEX_ADDRESS_URL = `https://${process.env.DOMAIN}/ibex/addresses`
 
 
-  async saveAllUsers(){
+  async saveAllUsers() {
     let page = 0;
     let users;
     do {
       users = await this.userRepository.find({
-        relations: {verifications: true, addresses: true},
+        relations: { verifications: true, addresses: true },
         skip: page * 100,
         take: 100,
       });
@@ -148,15 +150,15 @@ export class AuthService {
         clientSecret: data.clientSecret
       }
     })
-    if(!app) throw new UnauthorizedException()
-    const usaUser = await this.usaUserModel.findOne({input: data.input, country: data.country})
-    if(usaUser) return;
-    await this.usaUserModel.create({input: data.input,country: data.country})
+    if (!app) throw new UnauthorizedException()
+    const usaUser = await this.usaUserModel.findOne({ input: data.input, country: data.country })
+    if (usaUser) return;
+    await this.usaUserModel.create({ input: data.input, country: data.country })
   }
 
   async checkHasPin(authUser: AuthUser) {
     const user = await this.userRepository.findOneBy({ id: authUser.sub });
-    if(!user) throw new BadRequestException('Invalid user')
+    if (!user) throw new BadRequestException('Invalid user')
     return {
       hasPin: user.pin != null
     }
@@ -164,8 +166,8 @@ export class AuthService {
 
   async verifyPin(authUser: AuthUser, data: PinDto) {
     const user = await this.userRepository.findOneBy({ id: authUser.sub });
-    if(user.email == 'mp@singularagency.co'){
-      console.log('PIN',data.pin)
+    if (user.email == 'mp@singularagency.co') {
+      console.log('PIN', data.pin)
     }
     const isPinValid = await this.verifyPassword(user.pin, data.pin);
     if (!isPinValid) throw new ForbiddenException('Invalid pin');
@@ -208,8 +210,8 @@ export class AuthService {
       });
       if (verificationRecord) throw new BadRequestException('Mobile verified');
       const user = await this.userRepository.findOneBy({ id: authUser.sub });
-      if(!user) throw new BadRequestException('Invalid user')
-      if(user.mobile == null) throw new BadRequestException('User has not mobile yet')
+      if (!user) throw new BadRequestException('Invalid user')
+      if (user.mobile == null) throw new BadRequestException('User has not mobile yet')
       const otp = otpGenerator.generate(6, {
         upperCaseAlphabets: false,
         specialChars: false,
@@ -278,7 +280,7 @@ export class AuthService {
     }
   }
 
-  async verifyInputVerification(data: SignupOtpDto){
+  async verifyInputVerification(data: SignupOtpDto) {
     const app = await this.appRepository.findOneBy({
       clientId: data.clientId,
       clientSecret: data.clientSecret,
@@ -295,11 +297,11 @@ export class AuthService {
         expiry: MoreThan(expiry),
       },
     });
-    if(!otpRecord) throw new BadRequestException('Invalid OTP or expired')
+    if (!otpRecord) throw new BadRequestException('Invalid OTP or expired')
     await this.otpRepository.remove(otpRecord);
   }
 
-  async sendInputVerification(data: InputDto) {      
+  async sendInputVerification(data: InputDto) {
     const app = await this.appRepository.findOneBy({
       clientId: data.clientId,
       clientSecret: data.clientSecret,
@@ -335,13 +337,13 @@ export class AuthService {
       });
       await this.otpRepository.insert(otpRecord);
     }
-    if(isEmail(data.input)){
+    if (isEmail(data.input)) {
       const template = new OTPSigninTemplate(
         [{ email: data.input, name: 'OsmoUser' }],
         otp,
       );
       this.sengridService.sendMail(template);
-    }else{
+    } else {
       this.smsService.sendSMS({
         message: `Este es tu código: ${otp} de OsmoWallet`,
         phoneNumber: data.input,
@@ -352,8 +354,8 @@ export class AuthService {
   async sendEmailVerification(authUser: AuthUser, otpType: OTP = OTP.VERIFICATION) {
     try {
       const user = await this.userRepository.findOneBy({ id: authUser.sub });
-      if(!user) throw new BadRequestException('Invalid user')
-      if(user.email == null) throw new BadRequestException('This user has not email yet')
+      if (!user) throw new BadRequestException('Invalid user')
+      if (user.email == null) throw new BadRequestException('This user has not email yet')
       const otp = otpGenerator.generate(6, {
         upperCaseAlphabets: false,
         specialChars: false,
@@ -392,29 +394,29 @@ export class AuthService {
     }
   }
 
-  async verifyEmail(authUser: AuthUser,data: OtpDto) {
+  async verifyEmail(authUser: AuthUser, data: OtpDto) {
     const expiry = new Date();
-      const otpRecord = await this.otpRepository.findOne({
+    const otpRecord = await this.otpRepository.findOne({
+      where: {
+        user: { id: authUser.sub },
+        otp: data.otp,
+        type: OTP.VERIFICATION,
+        expiry: MoreThan(expiry),
+      },
+    });
+    if (otpRecord) {
+      const verificationRecord = await this.verificationRepository.findOne({
         where: {
           user: { id: authUser.sub },
-          otp: data.otp,
-          type: OTP.VERIFICATION,
-          expiry: MoreThan(expiry),
         },
       });
-      if (otpRecord) {
-        const verificationRecord = await this.verificationRepository.findOne({
-          where: {
-            user: { id: authUser.sub },
-          },
-        });
-        await this.verificationRepository.update(verificationRecord, {
-          email: true,
-        });
-        await this.otpRepository.remove(otpRecord);
-      } else {
-        throw new BadRequestException('Código no válido o expirado');
-      }
+      await this.verificationRepository.update(verificationRecord, {
+        email: true,
+      });
+      await this.otpRepository.remove(otpRecord);
+    } else {
+      throw new BadRequestException('Código no válido o expirado');
+    }
     const verificationRecord = await this.verificationRepository.findOneOrFail({
       where: { user: { id: authUser.sub } },
     });
@@ -481,7 +483,7 @@ export class AuthService {
       }),
       this.roleRepository.findOneBy({ name: 'User' }),
       this.periodRepository.findOneBy({ name: '5 minutes' }),
-      this.tierRepository.findOneBy({name: 'Standard'}),
+      this.tierRepository.findOneBy({ name: 'Standard' }),
       this.coinService.getAll(),
       this.fundingMethodRepository.find(),
       this.referralSourceRepository.find(),
@@ -495,21 +497,21 @@ export class AuthService {
       newUser = transactionalEntityManager.create(User, signUpDto);
       await transactionalEntityManager.insert(User, newUser);
 
-      for (const referralSourceId of signUpDto.referralSourceIds) {
+      // for (const referralSourceId of signUpDto.referralSourceIds) {
 
-        // get Referal Source
-        const referralSource = referralSources.filter(source => source.id === referralSourceId);
-  
-        if (referralSource.length > 0)  {
-          // Add UserReferralSource
-          const userReferralSource = transactionalEntityManager.create(UserReferralSource, {
-            user: newUser,
-            referralSource: referralSource[0]
-          })
-  
-          await transactionalEntityManager.insert(UserReferralSource, userReferralSource);
-        }
-      }
+      //   // get Referal Source
+      //   const referralSource = referralSources.filter(source => source.id === referralSourceId);
+
+      //   if (referralSource.length > 0)  {
+      //     // Add UserReferralSource
+      //     const userReferralSource = transactionalEntityManager.create(UserReferralSource, {
+      //       user: newUser,
+      //       referralSource: referralSource[0]
+      //     })
+
+      //     await transactionalEntityManager.insert(UserReferralSource, userReferralSource);
+      //   }
+      // }
 
       const account = transactionalEntityManager.create(Account, {
         user: newUser,
@@ -518,11 +520,11 @@ export class AuthService {
 
       const wallets: Wallet[] = coins.map((coin) => transactionalEntityManager.create(Wallet, { account: account, coin }));
       await transactionalEntityManager.insert(Wallet, wallets);
-      const tierUser = transactionalEntityManager.create(TierUser,{
+      const tierUser = transactionalEntityManager.create(TierUser, {
         tier: tier,
         user: newUser
       })
-      await transactionalEntityManager.insert(TierUser,tierUser)
+      await transactionalEntityManager.insert(TierUser, tierUser)
       //Create roles
       const roleUser = transactionalEntityManager.create(UserRole, {
         role: role,
@@ -567,14 +569,48 @@ export class AuthService {
       })
       await transactionalEntityManager.insert(FundingTransactionLimit, fundingTransactionLimits);
     });
-    this.userService.updateResidence(newUser.id,{residence: newUser.residence})
-    this.referralService.referral({sub: newUser.id});
+    this.userService.updateResidence(newUser.id, { residence: newUser.residence })
+    this.referralService.referral({ sub: newUser.id });
     this.createIbexAccount(newUser)
     const tokens = await this.getTokens(newUser.id, newUser.email);
     this.storeTokensForUser(newUser, tokens);
     this.kycService.createKycPartnerStatus(newUser.id)
     return tokens;
 
+  }
+
+  async howFindOut(howFindOutDto: HowKnowoutDto): Promise<any> {
+    const app = await this.appRepository.findOneBy({
+      clientId: howFindOutDto.clientId,
+      clientSecret: howFindOutDto.clientSecret,
+    });
+    if (!app) throw new UnauthorizedException();
+    if (!app.name.toLowerCase().includes('osmo')) throw new UnauthorizedException();
+
+    const [features, referralSources] = await Promise.all([
+      this.featureRepository.find({
+        where: { name: In([FeatureEnum.FUNDING, FeatureEnum.WITHDRAW]) },
+      }),
+      this.referralSourceRepository.find(),
+    ]);
+
+    const userReferralSource = new UserReferralSource();
+    userReferralSource.email = howFindOutDto.email;
+    userReferralSource.mobile = howFindOutDto.mobile;
+
+    const userReferralResources = referralSources.filter(rs => howFindOutDto.referralSourceIds.find(rsId => rsId == rs.id))
+
+
+    userReferralSource.referralSources = [...userReferralResources];
+
+    await this.userReferralSourceRepository.save(userReferralSource);
+
+    // Retrieve a UserReferralSource and its associated ReferralSources
+    const savedUserReferralSource = await this.userReferralSourceRepository.findOne({
+      where: [{email: howFindOutDto.email}, {mobile: howFindOutDto.mobile}],
+      relations: ['referralSources'],
+    });
+    return savedUserReferralSource;
   }
 
   private async createIbexAccount(user: User) {
@@ -682,7 +718,7 @@ export class AuthService {
         ],
       });
       if (!user) throw new UnauthorizedException('Invalid user');
-      if(data.input == 'demo@gmail.com' && data.otp == 453782){
+      if (data.input == 'demo@gmail.com' && data.otp == 453782) {
         const tokens = await this.getTokens(user.id, user.email);
         this.storeTokensForUser(user, tokens);
         return tokens;
@@ -701,11 +737,11 @@ export class AuthService {
       this.storeTokensForUser(user, tokens);
       const ibexAccount = await this.ibexAccountRepository.findOne({
         relations: {
-            user: true
+          user: true
         },
-        where: {user: {id: user.id}}
-    })
-      if(ibexAccount){
+        where: { user: { id: user.id } }
+      })
+      if (ibexAccount) {
         const body: CreateIbexAddressesDto = {
           ibexAccountId: ibexAccount.account
         }
@@ -767,7 +803,7 @@ export class AuthService {
     const authTokenRecord = await this.authTokenRepository.findOneBy({
       id: tokenRecord.id,
     });
-    if(data.token != null){
+    if (data.token != null) {
       const pushTokenRecord = this.pushTokenRepository.create({
         token: data.token,
         user: user,
@@ -775,7 +811,7 @@ export class AuthService {
       });
       await this.pushTokenRepository.insert(pushTokenRecord);
     }
-   
+
     const sessionRecord = this.sessionRepository.create({
       user: user,
       authToken: authTokenRecord,
@@ -795,7 +831,7 @@ export class AuthService {
       },
     );
     await this.sessionRepository.insert(sessionRecord);
-    if(user.email != null){
+    if (user.email != null) {
       const siginSessionTemplate = new SigninSessionTemplate(
         [{ email: user.email, name: user.username }],
         token,
@@ -818,7 +854,7 @@ export class AuthService {
         if (!app) throw new UnauthorizedException();
         if (!app.name.toLowerCase().includes('osmo'))
           throw new UnauthorizedException();
-    
+
         const user = await this.userRepository.findOneBy({ id: authUser.sub });
         const encryptedCurrentRefreshToken = await this.encrypterHelper.encrypt(refreshToken);
         const tokenRecord = await this.authTokenRepository.findOne({
@@ -828,9 +864,9 @@ export class AuthService {
             refreshToken: encryptedCurrentRefreshToken,
           },
         });
-    
+
         if (!tokenRecord) throw new UnauthorizedException();
-    
+
         const tokens = await this.getTokens(user.id, user.email);
         this.updateTokens(tokenRecord, tokens);
         return tokens;
@@ -889,5 +925,5 @@ export class AuthService {
     };
   }
 
-  
+
 }

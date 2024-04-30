@@ -1,4 +1,4 @@
-import { Entity, PrimaryColumn, OneToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryColumn, OneToOne, JoinColumn, Column, ManyToMany, JoinTable } from 'typeorm';
 import { User } from './user.entity';
 import { ReferralSource } from './referral.source.entity';
 
@@ -7,12 +7,13 @@ export class UserReferralSource {
   @PrimaryColumn('uuid', { default: () => 'gen_random_uuid()' })
   id: string;
 
-  @OneToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id'})
-  user: User;
+  @Column({ unique: true, nullable: true })
+  email: string;
 
-  @OneToOne(() => ReferralSource, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'referral_source_id'})
-  referralSource: ReferralSource;
-
+  @Column({ unique: true, nullable: true })
+  mobile: string;
+  
+  @ManyToMany(() => ReferralSource, (referralSource) => referralSource.userReferralSources)
+  @JoinTable()
+  referralSources: ReferralSource[];
 }
