@@ -49,6 +49,7 @@ import { KycModule } from '../kyc/kyc.module';
 import { FundingMethod } from 'src/entities/fundingMethod.entity';
 import { UserReferralSource } from 'src/entities/user.referral.source.entity';
 import { ReferralSource } from 'src/entities/referral.source.entity';
+import { HowFindoutUsDto } from 'src/modules/auth/dto/howFindoutUs.dto';
 
 @Module({
   imports: [JwtModule.register({}),
@@ -79,7 +80,8 @@ import { ReferralSource } from 'src/entities/referral.source.entity';
     TierUser,
     FundingMethod,
     UserReferralSource,
-    ReferralSource
+    ReferralSource,
+    HowFindoutUsDto
   ]),
   IbexModule,
   ReferralModule,
