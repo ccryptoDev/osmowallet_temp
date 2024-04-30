@@ -24,7 +24,7 @@ import { SignupOtpDto } from './dto/signupOtp.dto';
 import { CreateUsaUserDto } from './dto/usaUser.dto';
 import { VerifyEmailValid } from './dto/verifyEmailValid.dto';
 import { AuthUser } from './payloads/auth.payload';
-import { HowKnowoutDto } from './dto/howKnowOut.dto';
+import { HowFindoutUsDto } from './dto/howFindoutUs.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -86,8 +86,8 @@ export class AuthController {
   }
 
   @Post('how-find-out')
-  howFindOut(@Body() data: HowKnowoutDto) {
-    return this.authService.howFindOut(data);
+  howFindoutUs(@Body() data: HowFindoutUsDto) {
+    return this.authService.howFindoutUs(data);
   }
 
   @Post('signin/verify-otp')

@@ -2,7 +2,7 @@ import { IsEmail, IsISO31661Alpha2, IsNotEmpty, IsString, ValidateIf } from "cla
 import { IsMobileValid } from "src/common/dto_validators/mobile.validator"
 import { AuthDto } from "./auth.dto"
 
-export class HowKnowoutDto extends AuthDto{
+export class HowFindoutUsDto extends AuthDto{
 
     @IsEmail()
     @ValidateIf(o => o.mobile == undefined)
