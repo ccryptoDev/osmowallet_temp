@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToMany } from 'typeorm';
+import { UserReferralSource } from './user.referral.source.entity';
 
 @Entity({name: 'referral_source'})
 export class ReferralSource {
@@ -7,5 +8,7 @@ export class ReferralSource {
 
   @Column()
   source_name: string;
-
+  
+  @ManyToMany(() => UserReferralSource, (userReferralSource) => userReferralSource.referralSources)
+  userReferralSources: UserReferralSource[];
 }

@@ -1,0 +1,17 @@
+import { IsArray, IsEmail, IsISO31661Alpha2, IsNotEmpty, IsString, ValidateIf, isArray } from "class-validator"
+import { IsMobileValid } from "src/common/dto_validators/mobile.validator"
+import { AuthDto } from "./auth.dto"
+
+export class HowKnowoutDto extends AuthDto{
+
+    @IsEmail()
+    @ValidateIf(o => o.mobile == undefined)
+    email: string
+
+    @ValidateIf(o => o.mobile == undefined)
+    mobile: string
+
+    @IsArray()
+    referralSourceIds: string[]
+
+  }

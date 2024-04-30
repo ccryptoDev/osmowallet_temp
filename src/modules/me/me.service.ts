@@ -332,9 +332,7 @@ export class MeService {
     try {
       const user = await this.userRepository.findOneBy({ id: authUser.sub });
       const userReferralSources = await this.userReferralSourceRepository.find({
-        where: {
-          user: user,
-        },
+        where: [{email: user.email}, {mobile: user.mobile}],
       });
 
       // Remove all records about the user
@@ -355,13 +353,16 @@ export class MeService {
             id: In(data.referralSourceIds)
           } 
         });
-        for (const referralSource of referralSources) {
-          const userReferralSourceNew = this.userReferralSourceRepository.create({
-            user,
-            referralSource
-          });
-          await this.userReferralSourceRepository.insert(userReferralSourceNew);
-        }
+        // for (const referralSource of referralSources) {
+        //   const userReferralSourceNew = this.userReferralSourceRepository.create({
+            
+        //     referralSource
+        //   });
+        //   await this.userReferralSourceRepository.insert(userReferralSourceNew);
+        // }
+        const userReferralSourceNew = referralSources.filter(rs => data.referralSourceIds.find(rsId => rsId == rs.id))
+        await this.userReferralSourceRepository.insert(userReferralSourceNew);
+
       })
     } catch (error) {
       throw error;
