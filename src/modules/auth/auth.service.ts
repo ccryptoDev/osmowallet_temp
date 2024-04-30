@@ -477,7 +477,7 @@ export class AuthService {
       throw new BadRequestException('Ya existe un usuario con este username');
     }
 
-    const [features, role, period, tier, coins, fundingMethods, referralSources] = await Promise.all([
+    const [features, role, period, tier, coins, fundingMethods] = await Promise.all([
       this.featureRepository.find({
         where: { name: In([FeatureEnum.FUNDING, FeatureEnum.WITHDRAW]) },
       }),
@@ -486,7 +486,6 @@ export class AuthService {
       this.tierRepository.findOneBy({ name: 'Standard' }),
       this.coinService.getAll(),
       this.fundingMethodRepository.find(),
-      this.referralSourceRepository.find(),
     ]);
 
     //Create user
@@ -497,6 +496,7 @@ export class AuthService {
       newUser = transactionalEntityManager.create(User, signUpDto);
       await transactionalEntityManager.insert(User, newUser);
 
+<<<<<<< HEAD
       // for (const referralSourceId of signUpDto.referralSourceIds) {
 
       //   // get Referal Source
@@ -513,6 +513,8 @@ export class AuthService {
       //   }
       // }
 
+=======
+>>>>>>> dev
       const account = transactionalEntityManager.create(Account, {
         user: newUser,
       });
@@ -579,19 +581,34 @@ export class AuthService {
 
   }
 
+<<<<<<< HEAD
   async howFindoutUs(howFindoutUsDto: HowFindoutUsDto): Promise<any> {
     const app = await this.appRepository.findOneBy({
       clientId: howFindoutUsDto.clientId,
       clientSecret: howFindoutUsDto.clientSecret,
+=======
+  async howFindOut(howFindOutDto: HowKnowoutDto): Promise<any> {
+    const app = await this.appRepository.findOneBy({
+      clientId: howFindOutDto.clientId,
+      clientSecret: howFindOutDto.clientSecret,
+>>>>>>> dev
     });
     if (!app) throw new UnauthorizedException();
     if (!app.name.toLowerCase().includes('osmo')) throw new UnauthorizedException();
 
+<<<<<<< HEAD
     const referralSources = await this.referralSourceRepository.findBy({ id: In(howFindoutUsDto.referralSourceIds) })
 
     const newUserReferralSource = this.userReferralSourceRepository.create({
       email: howFindoutUsDto.email,
       mobile: howFindoutUsDto.mobile,
+=======
+    const referralSources = await this.referralSourceRepository.findBy({ id: In(howFindOutDto.referralSourceIds) })
+
+    const newUserReferralSource = this.userReferralSourceRepository.create({
+      email: howFindOutDto.email,
+      mobile: howFindOutDto.mobile,
+>>>>>>> dev
       referralSources: referralSources
     })
 
