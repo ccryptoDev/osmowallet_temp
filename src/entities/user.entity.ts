@@ -93,6 +93,4 @@ export class User {
   @OneToOne(() => Nit, (nit) => nit.user)
   nit: Nit;
 
-  @OneToOne(() => UserReferralSource, (UserReferralSource) => UserReferralSource.user)
-  userReferralSource: UserReferralSource;
 }
