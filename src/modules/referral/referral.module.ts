@@ -22,34 +22,15 @@ import { GoogleCloudTasksService } from 'src/services/google-cloud-tasks/google-
 import { PushNotificationModule } from '../push-notification/push-notification.module';
 
 @Module({
-  imports:[
-    MongooseModule.forFeature([
-      {name: PartnerInvoice.name, schema: PartnerInvoiceSchema}
-    ]),
-    TypeOrmModule.forFeature([
-      App,
-      Transaction,
-      Referral,
-      User,
-      Wallet,
-      TransactionGroup,
-      PartnerInvoice,
-      Setting,
-      Coin,
-      IbexAccount,
-    ]),
-    IbexModule,
-    PushNotificationModule,
-    PartnersModule
-  ],
-  controllers: [ReferralController],
-  providers: [
-    ReferralService,
-    SmsService,
-    SendGridService,
-    MyLogger,
-    GoogleCloudTasksService
-  ],
-  exports: [ReferralService]
+    imports: [
+        MongooseModule.forFeature([{ name: PartnerInvoice.name, schema: PartnerInvoiceSchema }]),
+        TypeOrmModule.forFeature([App, Transaction, Referral, User, Wallet, TransactionGroup, PartnerInvoice, Setting, Coin, IbexAccount]),
+        IbexModule,
+        PushNotificationModule,
+        PartnersModule,
+    ],
+    controllers: [ReferralController],
+    providers: [ReferralService, SmsService, SendGridService, MyLogger, GoogleCloudTasksService],
+    exports: [ReferralService],
 })
 export class ReferralModule {}

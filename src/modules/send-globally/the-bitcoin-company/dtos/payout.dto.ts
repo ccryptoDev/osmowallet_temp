@@ -1,27 +1,44 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsObject, ValidateNested } from "class-validator";
-import { Currencies } from "../enums";
-import { PayoutOptionEnum } from "../enums/payout-options.enum";
-import { PayoutOptions } from "./payout-options.dto";
-import { Type } from "class-transformer";
-
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { ValidateNested } from 'class-validator';
+import { Currencies } from '../enums';
+import { PayoutOptionEnum } from '../enums/payout-options.enum';
+import { PayoutOptions } from './payout-options.dto';
 
 class PayoutOption {
-  @IsEnum(PayoutOptionEnum)
-  id: PayoutOptionEnum;
+    @ApiProperty({
+        enum: PayoutOptionEnum,
+        description: 'The ID of the payout option',
+        example: 'phoneNumber',
+    })
+    id!: PayoutOptionEnum;
 
-  @IsObject()
-  requiredFields: PayoutOptions
+    @ApiProperty({
+        description: 'The required fields for the payout option',
+        example: { field1: 'value1', field2: 'value2' },
+    })
+    requiredFields!: PayoutOptions;
 }
 
 export class PayoutDTO {
-  @IsNumber()
-  amount: number;
-  @IsNotEmpty()
+    @ApiProperty({
+        description: 'The amount to be paid out',
+        example: 100,
+    })
+    amount!: number;
 
-  @IsEnum(Currencies)
-  targetCurrency: Currencies
+    @ApiProperty({
+        enum: Currencies,
+        description: 'The target currency for the payout',
+        example: 'BRL',
+    })
+    targetCurrency!: Currencies;
 
-  @ValidateNested()
-  @Type(() => PayoutOption)
-  payoutOption: PayoutOption
+    @ApiProperty({
+        description: 'The selected payout option',
+        example: { id: 'clabe', requiredFields: { field1: 'value1', field2: 'value2' } },
+    })
+    @ValidateNested()
+    @Type(() => PayoutOption)
+    payoutOption!: PayoutOption;
 }

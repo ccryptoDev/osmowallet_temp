@@ -1,5 +1,4 @@
-
 export interface BccrRate {
-    buy: number
-    sell: number
+    buy: number;
+    sell: number;
 }

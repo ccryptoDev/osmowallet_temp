@@ -1,6 +1,4 @@
-
-
 export interface RefundReferral {
-    invitationId: string,
-    isOsmoSponsor: boolean
+    invitationId: string;
+    isOsmoSponsor: boolean;
 }

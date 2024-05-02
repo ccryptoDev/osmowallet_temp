@@ -1,12 +1,14 @@
 import { Transform } from 'class-transformer';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class OtpDto {
+    @ApiProperty({ description: 'The input value', example: 'example input' })
+    @IsOptional()
+    input!: string;
 
-  @IsOptional()
-  input: string
-
-  @IsNumber()
-  @Transform(({ value }) => parseInt(value))
-  otp: number;
+    @ApiProperty({ description: 'The OTP value', example: 123456 })
+    @IsNumber()
+    @Transform(({ value }) => parseInt(value))
+    otp!: number;
 }

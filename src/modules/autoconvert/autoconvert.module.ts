@@ -7,14 +7,8 @@ import { Autoconvert } from 'src/entities/autoconvert.entity';
 import { Coin } from 'src/entities/coin.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      User,
-      Autoconvert,
-      Coin
-    ])
-  ],
-  providers: [AutoconvertService],
-  controllers: [AutoconvertController]
+    imports: [TypeOrmModule.forFeature([User, Autoconvert, Coin])],
+    providers: [AutoconvertService],
+    controllers: [AutoconvertController],
 })
 export class AutoconvertModule {}

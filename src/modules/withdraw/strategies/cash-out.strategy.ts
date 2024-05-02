@@ -2,10 +2,14 @@ import { BadRequestException } from '@nestjs/common';
 import Decimal from 'decimal.js';
 import { ValidatorData } from 'src/common/dto_validators/validator-data';
 import { FeatureEnum } from 'src/common/enums/feature.enum';
+import { MainWalletsAccount } from 'src/common/enums/main-wallets.enum';
+import { Partner } from 'src/common/enums/partner.enum';
 import { Status } from 'src/common/enums/status.enum';
 import { TransactionMethodEnum } from 'src/common/enums/transactionMethod.enum';
 import { TransactionSubtype } from 'src/common/enums/transactionSubtype.enum';
 import { TransactionType } from 'src/common/enums/transactionsType.enum';
+import { findAndLockWallet } from 'src/common/utils/find-and-lock-wallet';
+import { App } from 'src/entities/app.entity';
 import { Coin } from 'src/entities/coin.entity';
 import { Feature } from 'src/entities/feature.entity';
 import { Otp } from 'src/entities/otp.entity';
@@ -17,22 +21,17 @@ import { User } from 'src/entities/user.entity';
 import { UserTransactionLimit } from 'src/entities/userTransactionLimit.entity';
 import { Wallet } from 'src/entities/wallet.entity';
 import { WithdrawalMethod } from 'src/entities/withdrawalMethod.entity';
-import { CashOutDto } from 'src/modules/partners/cash-in-out/dtos/cash-out.dto';
+import { CoinEnum } from 'src/modules/me/enums/coin.enum';
+import { CashOutDto, Data } from 'src/modules/partners/cash-in-out/dtos/cash-out.dto';
+import { SlackChannel } from 'src/services/slack/enums/slack-channels.enum';
+import { SlackEmoji } from 'src/services/slack/enums/slack-emoji.enum';
+import { SlackWebhooks } from 'src/services/slack/enums/slack-webhooks.enum';
+import { SlackService } from 'src/services/slack/slack.service';
+import { createTransactionsTemplate } from 'src/services/slack/templates/transactions.template';
 import { EntityManager, MoreThanOrEqual } from 'typeorm';
 import { WithdrawDto } from '../dtos/withdraw.dto';
 import { WithdrawalMethodEnum } from '../enums/withdrawalMethod.enum';
 import { Withdraw } from './withdraw';
-import { App } from 'src/entities/app.entity';
-import { Partner } from 'src/common/enums/partner.enum';
-import { findAndLockWallet } from 'src/common/utils/find-and-lock-wallet';
-import { MainWalletsAccount } from 'src/common/enums/main-wallets.enum';
-import { SlackService } from 'src/services/slack/slack.service';
-import { SlackWebhooks } from 'src/services/slack/enums/slack-webhooks.enum';
-import { createTransactionsTemplate } from 'src/services/slack/templates/transactions.template';
-import { SlackChannel } from 'src/services/slack/enums/slack-channels.enum';
-import { CoinEnum } from 'src/modules/me/enums/coin.enum';
-import { FundingMethodEnum } from 'src/modules/funding/enums/fundingMethod.enum';
-import { SlackEmoji } from 'src/services/slack/enums/slack-emoji.enum';
 
 export class CashOutWithdraw implements Withdraw {
     constructor(
@@ -43,10 +42,7 @@ export class CashOutWithdraw implements Withdraw {
     ) {}
 
     async withdraw() {
-        const withdrawData = await ValidatorData.validate<CashOutDto['data']>(
-            this.body.data,
-            CashOutDto['data'],
-        );
+        const withdrawData = await ValidatorData.validate<CashOutDto['data']>(this.body.data, Data);
 
         const otp = await this.checkOTPValidity(withdrawData.token);
 
@@ -57,6 +53,7 @@ export class CashOutWithdraw implements Withdraw {
             this.manager.findOneBy(Coin, { id: this.body.coinId }),
             this.manager.findOneBy(App, { name: this.body.partner }),
         ]);
+        if (!user || !feature || !withdrawalMethod || !coin || !partner) throw new BadRequestException('Invalid data');
 
         const userTransactionLimit = await this.manager.findOne(UserTransactionLimit, {
             where: {
@@ -65,31 +62,28 @@ export class CashOutWithdraw implements Withdraw {
             },
         });
 
+        if (!userTransactionLimit) throw new BadRequestException('User transaction limit not found');
+
         await this.checkDailyMonthlyLimits(userTransactionLimit, this.body, coin);
 
         await this.manager.transaction('SERIALIZABLE', async (entityManager) => {
             const fee = parseFloat(new Decimal(this.body.amount).mul(withdrawalMethod.fee).toFixed(2));
             const [wallet, osmoWallet, osmoWalletFee] = await Promise.all([
-                findAndLockWallet({entityManager: entityManager,coinId: coin.id,userId: this.user.id}),
-                findAndLockWallet({entityManager: entityManager,coinId: coin.id,alias: MainWalletsAccount.MAIN}),
-                findAndLockWallet({entityManager: entityManager,coinId: coin.id,alias: MainWalletsAccount.FEES}),
+                findAndLockWallet({ entityManager: entityManager, coinId: coin.id, userId: this.user.id }),
+                findAndLockWallet({ entityManager: entityManager, coinId: coin.id, alias: MainWalletsAccount.MAIN }),
+                findAndLockWallet({ entityManager: entityManager, coinId: coin.id, alias: MainWalletsAccount.FEES }),
             ]);
+
+            if (!wallet || !osmoWallet || !osmoWalletFee) throw new BadRequestException('Wallet not found');
 
             const amountToDebitFromOsmo = new Decimal(this.body.amount).minus(fee).toNumber();
             const amountToDebitFromUser = new Decimal(this.body.amount).plus(fee).toNumber();
 
-            if (wallet.availableBalance < amountToDebitFromUser)
-                throw new BadRequestException('Insufficient balance');
+            if (wallet.availableBalance < amountToDebitFromUser) throw new BadRequestException('Insufficient balance');
 
-            const userWalletNewAvailableBalance = new Decimal(wallet.availableBalance)
-                .minus(amountToDebitFromUser)
-                .toNumber();
-            const osmoWalletNewAvailableBalance = new Decimal(osmoWallet.availableBalance)
-                .minus(amountToDebitFromOsmo)
-                .toNumber();
-            const osmoWalletFeeNewAvailableBalance = new Decimal(osmoWalletFee.availableBalance)
-                .minus(fee)
-                .toNumber();
+            const userWalletNewAvailableBalance = new Decimal(wallet.availableBalance).minus(amountToDebitFromUser).toNumber();
+            const osmoWalletNewAvailableBalance = new Decimal(osmoWallet.availableBalance).minus(amountToDebitFromOsmo).toNumber();
+            const osmoWalletFeeNewAvailableBalance = new Decimal(osmoWalletFee.availableBalance).minus(fee).toNumber();
 
             await Promise.all([
                 entityManager.update(Wallet, wallet.id, {
@@ -112,7 +106,7 @@ export class CashOutWithdraw implements Withdraw {
                 transactionCoin: coin,
                 type: TransactionType.WITHDRAW,
                 method: TransactionMethodEnum.CASH_OUT,
-                partner: Partner[partner.name]
+                partner: Partner[partner.name as keyof typeof Partner],
             });
             await entityManager.save(TransactionGroup, transactionGroup, { reload: true });
 
@@ -139,11 +133,7 @@ export class CashOutWithdraw implements Withdraw {
                 subtype: TransactionSubtype.DEBIT_FIAT_WITHDRAW,
                 balance: userWalletNewAvailableBalance,
             });
-            await entityManager.insert(Transaction, [
-                transactionRecord,
-                osmoFeeTransaction,
-                osmoDebitTransaction,
-            ]);
+            await entityManager.insert(Transaction, [transactionRecord, osmoFeeTransaction, osmoDebitTransaction]);
             userTransactionLimit.dailyAmassedAmount = new Decimal(userTransactionLimit.dailyAmassedAmount)
                 .plus(this.body.amount / coin.exchangeRate)
                 .toNumber();
@@ -161,22 +151,23 @@ export class CashOutWithdraw implements Withdraw {
             await entityManager.delete(Otp, otp.id);
         });
 
-        SlackService.notifyTransaction({ 
-            baseURL: SlackWebhooks.OSMO_WITHDRAW, 
-            data: createTransactionsTemplate({ 
-              channel: SlackChannel.OSMO_WITHDRAW, 
-              amount: this.body.amount, 
-              coin: CoinEnum[coin.acronym],
-              firstName: this.user.firstName, 
-              lastName: this.user.lastName, 
-              email: this.user.email, 
-              transactionType: {
-                name: WithdrawalMethodEnum.CASH_OUT,
-                emoji: SlackEmoji.MONEY_WITH_WINGS
-              }, 
-              attachmentUrl: "https://firebasestorage.googleapis.com/v0/b/osmowallet.appspot.com/o/logo_cuadrado.png?alt=media&token=955446df-d591-484c-986f-1211a14dad98" 
-            }) 
-        })
+        SlackService.notifyTransaction({
+            baseURL: SlackWebhooks.OSMO_WITHDRAW,
+            data: createTransactionsTemplate({
+                channel: SlackChannel.OSMO_WITHDRAW,
+                amount: this.body.amount,
+                coin: CoinEnum[coin.acronym as keyof typeof CoinEnum],
+                firstName: this.user.firstName,
+                lastName: this.user.lastName,
+                email: this.user.email,
+                transactionType: {
+                    name: WithdrawalMethodEnum.CASH_OUT,
+                    emoji: SlackEmoji.MONEY_WITH_WINGS,
+                },
+                attachmentUrl:
+                    'https://firebasestorage.googleapis.com/v0/b/osmowallet.appspot.com/o/logo_cuadrado.png?alt=media&token=955446df-d591-484c-986f-1211a14dad98',
+            }),
+        });
     }
 
     private async checkOTPValidity(token: number) {
@@ -194,9 +185,7 @@ export class CashOutWithdraw implements Withdraw {
     private async checkDailyMonthlyLimits(records: UserTransactionLimit, data: WithdrawDto, coin: Coin) {
         const dailyAmountToAmass = records.dailyAmassedAmount + data.amount / coin.exchangeRate;
         const monthlyAmountToAmass = records.monthlyAmassedAmount + data.amount / coin.exchangeRate;
-        if (dailyAmountToAmass > this.tierFeature.dailyLimit)
-            throw new BadRequestException('Daily limit reached');
-        if (monthlyAmountToAmass > this.tierFeature.monthlyLimit)
-            throw new BadRequestException('Monthly limit reached');
+        if (dailyAmountToAmass > this.tierFeature.dailyLimit) throw new BadRequestException('Daily limit reached');
+        if (monthlyAmountToAmass > this.tierFeature.monthlyLimit) throw new BadRequestException('Monthly limit reached');
     }
 }

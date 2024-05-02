@@ -1,5 +1,3 @@
-
-
 export enum TransactionType {
     SEND = 'SEND',
     AUTOCONVERT = 'AUTOCONVERT',
@@ -16,5 +14,5 @@ export enum TransactionType {
     OSMO_DEBIT = 'OSMO_DEBIT',
     CREDIT_BTC_OSMO_BUSINESS = 'CREDIT_BTC_OSMO_BUSINESS',
     LIQUIDITY_SELL = 'LIQUIDITY_SELL',
-    LIQUIDITY_BUY = 'LIQUIDITY_BUY'
+    LIQUIDITY_BUY = 'LIQUIDITY_BUY',
 }

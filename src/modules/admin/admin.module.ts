@@ -21,6 +21,6 @@ import { AdminMeModule } from './admin-me/admin-me.module';
         AdminSettingsModule,
         AdminMeModule,
     ],
-    controllers: []
+    controllers: [],
 })
 export class AdminModule {}

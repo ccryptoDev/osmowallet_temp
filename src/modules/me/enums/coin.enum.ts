@@ -1,5 +1,3 @@
-
-
 export enum CoinEnum {
     SATS = 'SATS',
     USD = 'USD',
@@ -11,5 +9,5 @@ export enum CoinEnum {
     BZD = 'BZD',
     MXN = 'MXN',
     SVC = 'SVC',
-    USDT = 'USDT'
+    USDT = 'USDT',
 }

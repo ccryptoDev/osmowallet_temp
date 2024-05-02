@@ -1,71 +1,75 @@
-import { Controller,Post,Req,Body, Get, ClassSerializerInterceptor, UseInterceptors, UseGuards, Param } from '@nestjs/common';
+import {
+    Controller,
+    Post,
+    Req,
+    Body,
+    Get,
+    ClassSerializerInterceptor,
+    UseInterceptors,
+    UseGuards,
+    Param,
+    ParseUUIDPipe,
+} from '@nestjs/common';
 import { KycService } from './kyc.service';
 import { KycQueueDto } from './dtos/queue.dto';
 import { AuthUser } from '../auth/payloads/auth.payload';
 import { Request } from 'express';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { MetamapGuard } from '../auth/guards/metamap.guard';
-import { KycFormDto } from './dtos/form.dto';
+import { User } from 'src/common/decorators/user.decorator';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 
-
+@ApiTags('kyc')
 @Controller('kyc')
 export class KycController {
-    constructor(private kycService: KycService){}
+    constructor(private kycService: KycService) {}
 
     @UseGuards(AccessTokenGuard)
     @Get('/partner-statuses')
+    @ApiOperation({ summary: 'Get KYC partner statuses' })
     async getKycPartnerStatuses(@Req() req: Request) {
-        const kycs = await this.kycService.getKycPartnerStatuses(req.user as AuthUser)
-        if(!kycs) return {}
-        return kycs
-    }
-
-
-    @UseGuards(AccessTokenGuard)
-    @Post('/form')
-    createCRKycForm(@Req() req: Request,@Body() body: KycFormDto) {
-        return this.kycService.createForm(req.user as AuthUser, body)
-    }
-
-    @UseGuards(AccessTokenGuard)
-    @Get('/form')
-    getCRKycForm(@Req() req: Request) {
-        return this.kycService.getForm(req.user as AuthUser)
+        const kycs = await this.kycService.getKycPartnerStatuses(req.user as AuthUser);
+        if (!kycs) return {};
+        return kycs;
     }
 
     @UseGuards(MetamapGuard)
     @Post('/wf')
+    @ApiOperation({ summary: 'Create workflow' })
+    @ApiBearerAuth()
     createWorkFlow(@Req() req: Request, @Body() data: any) {
-        console.log(data)
-        return this.kycService.manageEvent(data)
+        console.log(data);
+        return this.kycService.manageEvent(data);
     }
 
     @Post('/country')
+    @ApiOperation({ summary: 'Update country and name' })
     updateCountryAndName(@Body() data: KycQueueDto) {
-        return this.kycService.saveCountry(data.verificationId)
+        return this.kycService.saveCountry(data.verificationId);
     }
 
     @UseGuards(AccessTokenGuard)
     @Get('/validate')
-    validateUser(@Req() req: Request){
-        const authUser: AuthUser = {sub: req.user['sub']}
-        return this.kycService.validate(authUser)
+    @ApiOperation({ summary: 'Validate user' })
+    @ApiBearerAuth()
+    validateUser(@User() user: AuthUser) {
+        return this.kycService.validate(user);
     }
 
     @UseInterceptors(ClassSerializerInterceptor)
     @UseGuards(AccessTokenGuard)
     @Get('/')
-    async getVerification(@Req() req: Request){
-        const authUser: AuthUser = {sub: req.user['sub']}
-        const verification = await this.kycService.getKycVerification(authUser)
-        if(!verification) return {}
-        return verification
+    @ApiOperation({ summary: 'Get KYC verification' })
+    @ApiBearerAuth()
+    async getVerification(@User() user: AuthUser) {
+        const verification = await this.kycService.getKycVerification(user);
+        if (!verification) return {};
+        return verification;
     }
 
     @Get('/:id/raw-kyc')
-    async getRawKyc(@Param(':id') id: string){
-        return this.kycService.getRawKyc(id)
+    @ApiOperation({ summary: 'Get raw KYC' })
+    async getRawKyc(@Param('id', new ParseUUIDPipe()) id: string) {
+        return this.kycService.getRawKyc(id);
     }
-
 }
-

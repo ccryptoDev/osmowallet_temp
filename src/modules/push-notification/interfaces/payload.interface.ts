@@ -1,14 +1,11 @@
-import { TransactionGroup } from "src/entities/transactionGroup.entity"
-import MobileRoutePaths from "../enums/mobileRoutesPaths.enum"
-import { MobileActionEnum } from "../enums/mobileAction.enum"
-import { CoinEnum } from "src/modules/me/enums/coin.enum"
+import { MobileRoutePaths } from '../enums/mobileRoutesPaths.enum';
 
-export interface PushPayload{
-    title: string
-    message: string
+export interface PushPayload {
+    title: string;
+    message: string;
     data?: {
-        route?: MobileRoutePaths
-        currency?: string,
-        amount?: string
-    }
+        route?: MobileRoutePaths;
+        currency?: string;
+        amount?: string;
+    };
 }

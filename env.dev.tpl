@@ -1,3 +1,14 @@
+SWAGGER_PASSWORD=op://OsmoWallet General/Swagger/password
+
+RIDIVI_WEBHOOK_SECRET=op://OsmoWallet-DEV/Ridivi/WEBHOOK_SECRET
+RIDIVI_USERNAME=op://OsmoWallet-DEV/Ridivi/username
+RIDIVI_PASSWORD=op://OsmoWallet-DEV/Ridivi/password
+RIDIVI_CLIENT_ID=op://OsmoWallet-DEV/Ridivi/CLIENT_ID
+RIDIVI_CLIENT_SECRET=op://OsmoWallet-DEV/Ridivi/CLIENT_SECRET
+RIDIVI_URL=op://OsmoWallet-DEV/Ridivi/url
+RIDIVI_PAY_URL=op://OsmoWallet-DEV/Ridivi/PAY_URL
+
+CORBADO_FRONTEND_API=op://Osmowallet-DEV/Corbado/FRONTEND_API
 CORBADO_PROJECT_ID=op://Osmowallet-DEV/Corbado/PROJECT_ID
 CORBADO_API_SECRET=op://Osmowallet-DEV/Corbado/API_SECRET
 

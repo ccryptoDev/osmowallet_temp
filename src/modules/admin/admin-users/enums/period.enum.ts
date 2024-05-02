@@ -1,5 +1,3 @@
-
-
 export enum TransactionMetricPeriod {
     M12 = '12M',
     M6 = '6M',
@@ -9,6 +7,5 @@ export enum TransactionMetricPeriod {
     D7 = '7D',
     TODAY = 'TODAY',
     YESTERDAY = 'YESTERDAY',
-    CUSTOM = 'CUSTOM'
-    
+    CUSTOM = 'CUSTOM',
 }
