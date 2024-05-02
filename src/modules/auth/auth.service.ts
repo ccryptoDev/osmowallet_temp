@@ -586,17 +586,27 @@ export class AuthService {
     if (!app) throw new UnauthorizedException();
     if (!app.name.toLowerCase().includes('osmo')) throw new UnauthorizedException();
 
-    const referralSources = await this.referralSourceRepository.findBy({ id: In(howFindoutUsDto.referralSourceIds) })
+    let userReferralSource = await this.userReferralSourceRepository.findOne({
+      where: [
+        { email:howFindoutUsDto.email },
+        { mobile:howFindoutUsDto.mobile },
+      ],
+    });
+    
+    if(!userReferralSource) {
+      userReferralSource = this.userReferralSourceRepository.create({
+        email: howFindoutUsDto.email,
+        mobile: howFindoutUsDto.mobile,
+        referralSources: howFindoutUsDto.referralSourceIds.join(",")
+      })
+    } else {
+      userReferralSource.referralSources = howFindoutUsDto.referralSourceIds.join(",")
+    }
+    
+    // Save the user referral source
+    await this.userReferralSourceRepository.save(userReferralSource);
 
-    const newUserReferralSource = this.userReferralSourceRepository.create({
-      email: howFindoutUsDto.email,
-      mobile: howFindoutUsDto.mobile,
-      referralSources: referralSources
-    })
-
-    await this.userReferralSourceRepository.save(newUserReferralSource)
-
-    return newUserReferralSource;
+    return userReferralSource;
   }
 
   private async createIbexAccount(user: User) {
