@@ -6,7 +6,7 @@ import { Request } from 'express';
 export class AppController {
   constructor(private readonly appService: AppService) {}
   
-  @Get('referral-source')
+  @Get('getReferralSource')
   getReferralSource() {
     return this.appService.getReferralSource();
   }
