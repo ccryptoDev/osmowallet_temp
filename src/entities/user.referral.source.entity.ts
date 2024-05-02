@@ -12,8 +12,7 @@ export class UserReferralSource {
 
   @Column({ unique: true, nullable: true })
   mobile: string;
-  
-  @ManyToMany(() => ReferralSource, (referralSource) => referralSource.userReferralSources)
-  @JoinTable()
-  referralSources: ReferralSource[];
+
+  @Column({ nullable: true })
+  referralSources: string;
 }

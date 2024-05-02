@@ -592,31 +592,22 @@ export class AuthService {
         { mobile:howFindoutUsDto.mobile },
       ],
     });
-    if (!userReferralSource) {
-      const referralSources = await this.referralSourceRepository.findBy({
-        id: In(howFindoutUsDto.referralSourceIds),
-      });
-    // const referralSources = await this.referralSourceRepository.findBy({ id: In(howFindoutUsDto.referralSourceIds) })
+    
+    if(!userReferralSource) {
+      userReferralSource = this.userReferralSourceRepository.create({
+        email: howFindoutUsDto.email,
+        mobile: howFindoutUsDto.mobile,
+        referralSources: howFindoutUsDto.referralSourceIds.join(",")
+      })
+    } else {
+      userReferralSource.referralSources = howFindoutUsDto.referralSourceIds.join(",")
+    }
+    
+    // Save the user referral source
+    await this.userReferralSourceRepository.save(userReferralSource);
 
-    userReferralSource = this.userReferralSourceRepository.create({
-      email: howFindoutUsDto.email,
-      mobile: howFindoutUsDto.mobile,
-      referralSources: referralSources
-    })
-  } else {
-    // Update the existing user referral source
-    userReferralSource.referralSources = await this.referralSourceRepository.findBy({
-      id: In(howFindoutUsDto.referralSourceIds),
-    });
+    return userReferralSource;
   }
-
-  // Save the user referral source
-  return this.userReferralSourceRepository.save(userReferralSource);
-
-    // await this.userReferralSourceRepository.save(newUserReferralSource)
-
-    // return newUserReferralSource;
-}
 
   private async createIbexAccount(user: User) {
     this.googleCloudTaskService.createInternalTask(

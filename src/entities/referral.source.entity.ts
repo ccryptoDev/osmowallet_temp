@@ -8,7 +8,4 @@ export class ReferralSource {
 
   @Column()
   source_name: string;
-  
-  @ManyToMany(() => UserReferralSource, (userReferralSource) => userReferralSource.referralSources)
-  userReferralSources: UserReferralSource[];
 }
