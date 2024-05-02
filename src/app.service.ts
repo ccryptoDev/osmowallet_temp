@@ -10,13 +10,15 @@ import { OsmoBusinessBpt } from './entities/osmoBusinessBPT.entity';
 import { RedisService } from './common/services/redis/redis.service';
 import { IbexService } from './modules/ibex/ibex.service';
 import { IbexAccount } from './entities/ibex.account.entity';
+import { ReferralSource } from './entities/referral.source.entity';
 
 @Injectable()
 export class AppService {
   constructor(
     @InjectRepository(Role) private roleRepository: Repository<Role>,
     @InjectRepository(Address) private addressRepository: Repository<Address>,
-    @InjectRepository(TransactionDetail)
+    @InjectRepository(TransactionDetail),
+    @InjectRepository(ReferralSource) private referralSourceRepository: Repository<ReferralSource>,
     private transactionDetailRepository: Repository<TransactionDetail>,
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(OsmoBusinessBpt)
@@ -27,5 +29,10 @@ export class AppService {
     private redisService: RedisService,
   ) {}
   
+  async getReferralSource () {
+    return await this.referralSourceRepository.find({
+      select: ['source_name'],
+    });
+  }
 
 }
