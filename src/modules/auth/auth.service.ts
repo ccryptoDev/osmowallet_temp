@@ -73,7 +73,7 @@ import { FundingTransactionLimit } from 'src/entities/fundingTransactionLimits.e
 import { FundingMethod } from 'src/entities/fundingMethod.entity';
 import { ReferralSource } from 'src/entities/referral.source.entity';
 import { UserReferralSource } from 'src/entities/user.referral.source.entity';
-import { HowKnowoutDto } from './dto/howKnowOut.dto';
+import { HowFindoutUsDto } from './dto/howFindoutUs.dto';
 
 @Injectable()
 export class AuthService {
@@ -496,6 +496,22 @@ export class AuthService {
       newUser = transactionalEntityManager.create(User, signUpDto);
       await transactionalEntityManager.insert(User, newUser);
 
+      // for (const referralSourceId of signUpDto.referralSourceIds) {
+
+      //   // get Referal Source
+      //   const referralSource = referralSources.filter(source => source.id === referralSourceId);
+
+      //   if (referralSource.length > 0)  {
+      //     // Add UserReferralSource
+      //     const userReferralSource = transactionalEntityManager.create(UserReferralSource, {
+      //       user: newUser,
+      //       referralSource: referralSource[0]
+      //     })
+
+      //     await transactionalEntityManager.insert(UserReferralSource, userReferralSource);
+      //   }
+      // }
+
       const account = transactionalEntityManager.create(Account, {
         user: newUser,
       });
@@ -562,26 +578,45 @@ export class AuthService {
 
   }
 
-  async howFindOut(howFindOutDto: HowKnowoutDto): Promise<any> {
+  async howFindoutUs(howFindoutUsDto: HowFindoutUsDto): Promise<any> {
     const app = await this.appRepository.findOneBy({
-      clientId: howFindOutDto.clientId,
-      clientSecret: howFindOutDto.clientSecret,
+      clientId: howFindoutUsDto.clientId,
+      clientSecret: howFindoutUsDto.clientSecret,
     });
     if (!app) throw new UnauthorizedException();
     if (!app.name.toLowerCase().includes('osmo')) throw new UnauthorizedException();
 
-    const referralSources = await this.referralSourceRepository.findBy({ id: In(howFindOutDto.referralSourceIds) })
+    let userReferralSource = await this.userReferralSourceRepository.findOne({
+      where: [
+        { email:howFindoutUsDto.email },
+        { mobile:howFindoutUsDto.mobile },
+      ],
+    });
+    if (!userReferralSource) {
+      const referralSources = await this.referralSourceRepository.findBy({
+        id: In(howFindoutUsDto.referralSourceIds),
+      });
+    // const referralSources = await this.referralSourceRepository.findBy({ id: In(howFindoutUsDto.referralSourceIds) })
 
-    const newUserReferralSource = this.userReferralSourceRepository.create({
-      email: howFindOutDto.email,
-      mobile: howFindOutDto.mobile,
+    userReferralSource = this.userReferralSourceRepository.create({
+      email: howFindoutUsDto.email,
+      mobile: howFindoutUsDto.mobile,
       referralSources: referralSources
     })
-
-    await this.userReferralSourceRepository.save(newUserReferralSource)
-
-    return newUserReferralSource;
+  } else {
+    // Update the existing user referral source
+    userReferralSource.referralSources = await this.referralSourceRepository.findBy({
+      id: In(howFindoutUsDto.referralSourceIds),
+    });
   }
+
+  // Save the user referral source
+  return this.userReferralSourceRepository.save(userReferralSource);
+
+    // await this.userReferralSourceRepository.save(newUserReferralSource)
+
+    // return newUserReferralSource;
+}
 
   private async createIbexAccount(user: User) {
     this.googleCloudTaskService.createInternalTask(
