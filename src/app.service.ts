@@ -17,8 +17,8 @@ export class AppService {
   constructor(
     @InjectRepository(Role) private roleRepository: Repository<Role>,
     @InjectRepository(Address) private addressRepository: Repository<Address>,
-    @InjectRepository(TransactionDetail),
     @InjectRepository(ReferralSource) private referralSourceRepository: Repository<ReferralSource>,
+    @InjectRepository(TransactionDetail)
     private transactionDetailRepository: Repository<TransactionDetail>,
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(OsmoBusinessBpt)
