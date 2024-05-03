@@ -6,6 +6,6 @@ export enum SlackWebhooks {
     FUNDING_CARD = 'https://hooks.slack.com/services/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',
     WITHDRAW_BANK = 'https://hooks.slack.com/services/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',
     TRANSACTIONS_STABLE_COINS = 'https://hooks.slack.com/services/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',
-    OSMO_STATUS_MONITOR = 'https://hooks.slack.com/services/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'
+    OSMO_STATUS_MONITOR = 'https://hooks.slack.com/services/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',
+    STILLMAN_CHANNEL = 'https://hooks.slack.com/services/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',
 }
-

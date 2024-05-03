@@ -1,7 +1,5 @@
-
-
 export enum OTP {
     AUTH = 'AUTH',
     VERIFICATION = 'VERIFY',
-    TRANSACTION = 'TRANSACTION'
+    TRANSACTION = 'TRANSACTION',
 }

@@ -1,9 +1,11 @@
-import { IsNotEmptyObject, IsNumber, IsUUID } from "class-validator";
-import { BankAccount } from "src/entities/bank.account.entity";
+import { IsUUID } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
-
-export class BankWithdrawDto{
-    
+export class BankWithdrawDto {
+    @ApiProperty({
+        description: 'The ID of the bank account',
+        example: '123e4567-e89b-12d3-a456-426614174000',
+    })
     @IsUUID()
-    bankAccountId: string
+    bankAccountId!: string;
 }

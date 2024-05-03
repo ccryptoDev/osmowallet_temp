@@ -19,12 +19,12 @@ import { AdminTransaction } from './create-transaction.interface';
 import { findAndLockWallet } from 'src/common/utils/find-and-lock-wallet';
 import { MainWalletsAccount } from 'src/common/enums/main-wallets.enum';
 export class OsmoCredit implements AdminTransaction {
-    private data: OsmoCreditDto;
+    private data!: OsmoCreditDto;
     constructor(
         private manager: EntityManager,
         private createAdminTransactionDto: CreateAdminTransactionDto,
         private ibexService: IbexService,
-    ) { }
+    ) {}
 
     async validateData() {
         this.data = await ValidatorData.validate<OsmoCreditDto>(this.createAdminTransactionDto.data, OsmoCreditDto);
@@ -41,19 +41,22 @@ export class OsmoCredit implements AdminTransaction {
                 user: { id: this.data.userId },
             },
         });
-        
+        if (!addresses) throw new BadRequestException('User does not have an address');
+
         const coin = await this.manager.findOneBy(Coin, { id: this.data.coinId });
+        if (!coin) throw new BadRequestException('Invalid coin');
 
         if (coin.acronym === CoinEnum.SATS) {
             const lnURLDecoded = ln.decode(addresses.lnUrlPayer);
             const params = await this.ibexService.getParams(lnURLDecoded);
-            await this.ibexService.payLnURL(params, this.data.amount * 1000, process.env.IBEX_NATIVE_OSMO_ACCOUNT_ID);
+            await this.ibexService.payLnURL(params, this.data.amount * 1000, process.env.IBEX_NATIVE_OSMO_ACCOUNT_ID ?? '');
         }
         await this.manager.transaction('SERIALIZABLE', async (entityManager) => {
             const [userWallet, osmoWallet] = await Promise.all([
-                findAndLockWallet({entityManager: entityManager, coinId: this.data.coinId, userId: this.data.userId}),
-                findAndLockWallet({entityManager: entityManager, coinId: this.data.coinId, alias: MainWalletsAccount.MAIN})
-            ])
+                findAndLockWallet({ entityManager: entityManager, coinId: this.data.coinId, userId: this.data.userId }),
+                findAndLockWallet({ entityManager: entityManager, coinId: this.data.coinId, alias: MainWalletsAccount.MAIN }),
+            ]);
+            if (!userWallet || !osmoWallet) throw new BadRequestException('wallets not found');
 
             await Promise.allSettled([
                 entityManager.update(Wallet, userWallet.id, {

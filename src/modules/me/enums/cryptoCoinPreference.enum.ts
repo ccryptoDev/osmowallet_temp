@@ -1,5 +1,4 @@
-
 export enum CryptoCoinPreference {
     SATS = 'SATS',
-    BTC = 'BTC'
+    BTC = 'BTC',
 }

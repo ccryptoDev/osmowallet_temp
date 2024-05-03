@@ -1,7 +1,5 @@
-enum MobileRoutePaths{
+export enum MobileRoutePaths {
     Transactions = 'transactions',
     Referral = 'referrals',
-    Verification = 'verifications'
+    Verification = 'verifications',
 }
-
-export default MobileRoutePaths

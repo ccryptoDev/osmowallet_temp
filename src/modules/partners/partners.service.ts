@@ -1,44 +1,46 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/entities/user.entity';
-import { In, Repository } from 'typeorm';
+import * as crypto from 'crypto';
+import Decimal from 'decimal.js';
+import { Model } from 'mongoose';
+import EncrypterHelper from 'src/common/helpers/encrypter.helper';
+import { App } from 'src/entities/app.entity';
 import { Bank } from 'src/entities/bank.entity';
 import { IbexAccount } from 'src/entities/ibex.account.entity';
-import { IbexService } from '../ibex/ibex.service';
-import { CoinsService } from '../coins/coins.service';
-import { CoinEnum } from '../me/enums/coin.enum';
-import { PartnerConfig } from 'src/entities/strikeConfig.entity';
-import { LightningInvoiceDto } from '../webhooks/dtos/receiveInvoice.dto';
-import { SendGridService } from '../send-grid/send-grid.service';
-import { SmsService } from '../../services/sms/sms.service';
-import { GetUserbyPhoneDto } from './dtos/getUser.dto';
-import { InvoiceReference } from './interfaces/strikeInvoiceReferece.interface';
-import { PartnerStatus } from './enums/partnerEvent.enum';
-import { PartnerFlowContext, PartnerFlowStrategy } from './flows/partner.flow';
-import { OsmoWalletUserFlow } from './flows/osmoWalletUser.flow';
-import { OsmoWalletUserBank } from './flows/osmoWalletUserBank.flow';
-import { NoOsmoUserWallet } from './flows/noOsmoUserWallet.flow';
-import { ReceiveQueryDto } from './dtos/query.dto';
-import { AuthUser } from '../auth/payloads/auth.payload';
-import { App } from 'src/entities/app.entity';
-import { PartnerGenerateInvoiceDto } from './dtos/generateInvoice.dto';
-import * as crypto from 'crypto';
-import { AuthDto } from '../auth/dto/auth.dto';
 import { PartnerToken } from 'src/entities/partnerTokens.entity';
-import EncrypterHelper from 'src/common/helpers/encrypter.helper';
-import { JwtService } from '@nestjs/jwt';
-import Decimal from 'decimal.js';
-import { PartnerFlow } from './enums/partnerFlow.enum';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { PartnerConfig } from 'src/entities/strikeConfig.entity';
+import { User } from 'src/entities/user.entity';
 import { PartnerInvoice } from 'src/schemas/partnerInvoice.schema';
 import { GoogleCloudTasksService } from 'src/services/google-cloud-tasks/google-cloud-tasks.service';
 import { ExternalTask } from 'src/services/google-cloud-tasks/interfaces/externalTask.interface';
+import { In, Repository } from 'typeorm';
+import { SmsService } from '../../services/sms/sms.service';
+import { AuthDto } from '../auth/dto/auth.dto';
+import { AuthUser } from '../auth/payloads/auth.payload';
+import { CoinsService } from '../coins/coins.service';
+import { IbexService } from '../ibex/ibex.service';
+import { CoinEnum } from '../me/enums/coin.enum';
+import { SendGridService } from '../send-grid/send-grid.service';
+import { LightningInvoiceDto } from '../webhooks/dtos/receiveInvoice.dto';
+import { PartnerGenerateInvoiceDto } from './dtos/generateInvoice.dto';
+import { GetUserbyPhoneDto } from './dtos/getUser.dto';
+import { ReceiveQueryDto } from './dtos/query.dto';
+import { PartnerStatus } from './enums/partnerEvent.enum';
+import { PartnerFlow } from './enums/partnerFlow.enum';
+import { NoOsmoUserWallet } from './flows/noOsmoUserWallet.flow';
+import { OsmoWalletUserFlow } from './flows/osmoWalletUser.flow';
+import { OsmoWalletUserBank } from './flows/osmoWalletUserBank.flow';
+import { PartnerFlowContext, PartnerFlowStrategy } from './flows/partner.flow';
+import { InvoiceReference } from './interfaces/strikeInvoiceReferece.interface';
 
 @Injectable()
 export class PartnersService {
-    private QUEUE_NOTIFIER = `PARTNER-NOTIFIER-${process.env.ENV}`
+    private QUEUE_NOTIFIER = `PARTNER-NOTIFIER-${process.env.ENV}`;
     constructor(
+        private configSerive: ConfigService,
         @InjectRepository(User) private userRepository: Repository<User>,
         @InjectRepository(Bank) private bankRepository: Repository<Bank>,
         @InjectRepository(IbexAccount) private ibexAccountRepository: Repository<IbexAccount>,
@@ -53,64 +55,63 @@ export class PartnersService {
         private sendGridService: SendGridService,
         private smsService: SmsService,
         private jwtService: JwtService,
-    ){}
+    ) {}
 
-    async notifyBankTransaction(transactionId: string, status: PartnerStatus){
+    async notifyBankTransaction(transactionId: string, status: PartnerStatus) {
         const storedInvoice = await this.partnerInvoiceModel.findOne({
             transactionId: transactionId,
-        })
-        if(storedInvoice){
-            const partnerApp = await this.appRepository.findOneBy({name: storedInvoice.partner})
+        });
+        if (storedInvoice) {
+            const partnerApp = await this.appRepository.findOneBy({ name: storedInvoice.partner });
+            if (!partnerApp) throw new BadRequestException('Partner not found');
             this.addNotifierToQueue({
                 referenceId: storedInvoice.referenceId,
                 event: status,
                 webhookURL: partnerApp.webhookURL,
-                secretKey: `${partnerApp.clientId}@${partnerApp.clientSecret}`
-            })
+                secretKey: `${partnerApp.clientId}@${partnerApp.clientSecret}`,
+            });
         }
     }
 
     private makeid() {
-        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
-          const r = Math.random() * 16 | 0;
-          const v = c == "x" ? r : (r & 0x3 | 0x8);
-          return v.toString(16);
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = (Math.random() * 16) | 0;
+            const v = c == 'x' ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
         });
     }
 
     private async getTokensForPartner(appName: string) {
-    appName = appName.toUpperCase();
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(
-        {
-          sub: appName,
-        },
-        {
-          secret: process.env.PARTNER_ACCESS_SECRET,
-          expiresIn: '1h',
-        },
-      ),
-      this.jwtService.signAsync(
-        {
-          sub: appName,
-        },
-        {
-          secret: process.env.PARTNER_REFRESH_SECRET,
-          expiresIn: '7d',
-        },
-      ),
-    ]);
+        appName = appName.toUpperCase();
+        const [accessToken, refreshToken] = await Promise.all([
+            this.jwtService.signAsync(
+                {
+                    sub: appName,
+                },
+                {
+                    secret: process.env.PARTNER_ACCESS_SECRET,
+                    expiresIn: '1h',
+                },
+            ),
+            this.jwtService.signAsync(
+                {
+                    sub: appName,
+                },
+                {
+                    secret: process.env.PARTNER_REFRESH_SECRET,
+                    expiresIn: '7d',
+                },
+            ),
+        ]);
 
-    return {
-      accessToken,
-      refreshToken,
-    };
+        return {
+            accessToken,
+            refreshToken,
+        };
     }
 
     async storeTokensForPartner(app: App, tokens: any) {
-        const encryptedRefreshToken = await this.encrypterHelper.encrypt(
-            tokens.refreshToken,
-          );
+        const encryptedRefreshToken = await this.encrypterHelper.encrypt(tokens.refreshToken);
         await this.partnerTokenRepository.insert({
             app: app,
             refreshToken: encryptedRefreshToken,
@@ -118,15 +119,13 @@ export class PartnersService {
     }
 
     async updateTokensForPartner(tokenRecord: PartnerToken, tokens: any) {
-        const encryptedRefreshToken = await this.encrypterHelper.encrypt(
-            tokens.refreshToken,
-            );
+        const encryptedRefreshToken = await this.encrypterHelper.encrypt(tokens.refreshToken);
         this.partnerTokenRepository.update(tokenRecord, {
             refreshToken: encryptedRefreshToken,
         });
     }
-  
-    async refreshToken(refreshToken: string, data: AuthDto,) {
+
+    async refreshToken(refreshToken: string, data: AuthDto) {
         const app = await this.appRepository.findOneBy({
             clientId: data.clientId,
             clientSecret: data.clientSecret,
@@ -134,26 +133,25 @@ export class PartnersService {
         if (!app) throw new UnauthorizedException();
         const encryptedCurrentRefreshToken = await this.encrypterHelper.encrypt(refreshToken);
         const tokenRecord = await this.partnerTokenRepository.findOne({
-        where: {
-            app: { id: app.id },
-            refreshToken: encryptedCurrentRefreshToken,
-        },
+            where: {
+                app: { id: app.id },
+                refreshToken: encryptedCurrentRefreshToken,
+            },
         });
         if (!tokenRecord) throw new UnauthorizedException();
 
         const newTokens = await this.getTokensForPartner(app.name);
         this.updateTokensForPartner(tokenRecord, newTokens);
         return newTokens;
-  }
+    }
 
-    async signIn(data: AuthDto){
+    async signIn(data: AuthDto) {
         const app = await this.appRepository.findOneBy({
             clientId: data.clientId,
             clientSecret: data.clientSecret,
         });
         if (!app) throw new UnauthorizedException();
-        if (app.name.toLowerCase().includes('osmo'))
-        throw new UnauthorizedException();
+        if (app.name.toLowerCase().includes('osmo')) throw new UnauthorizedException();
 
         const tokens = await this.getTokensForPartner(app.name);
         this.storeTokensForPartner(app, tokens);
@@ -161,193 +159,209 @@ export class PartnersService {
     }
 
     async notifyPendingTransactions() {
-        const currentDate = new Date()
+        const currentDate = new Date();
         const fiveDaysAgo = new Date();
         fiveDaysAgo.setDate(currentDate.getDate() - 5);
         const invoices = await this.partnerInvoiceModel.find({
             flow: PartnerFlow.NoOsmoUserToWallet,
             status: PartnerStatus.PENDING,
-            createdAt: { $lte: fiveDaysAgo }
-        })
-        const apps = await this.appRepository.find({where: {
-            name: In(invoices.map(invoice => invoice.partner))
-        }})
-        const referencesData: InvoiceReference[] = invoices.map((invoice)  => {
-            const partner = apps.find(app => app.name == invoice.partner)
-            return ({
-                referenceId: invoice.referenceId, 
+            createdAt: { $lte: fiveDaysAgo },
+        });
+        const apps = await this.appRepository.find({
+            where: {
+                name: In(invoices.map((invoice) => invoice.partner)),
+            },
+        });
+        const referencesData: InvoiceReference[] = invoices.map((invoice) => {
+            const partner = apps.find((app) => app.name == invoice.partner);
+            if (!partner) throw new BadRequestException('Partner not found');
+            return {
+                referenceId: invoice.referenceId,
                 event: PartnerStatus.FAILED,
                 webhookURL: partner.webhookURL,
-                secretKey: `${partner.clientId}@${partner.clientSecret}`
-            })
-        })
-        const ids = invoices.map((invoice) => invoice.id)
-        Promise.all(referencesData.map((data) => this.addNotifierToQueue(data)))
-        
-        if(invoices.length > 0){
-            await this.partnerInvoiceModel.findByIdAndUpdate(ids, { status: PartnerStatus.FAILED })
+                secretKey: `${partner.clientId}@${partner.clientSecret}`,
+            };
+        });
+        const ids = invoices.map((invoice) => invoice.id);
+        Promise.all(referencesData.map((data) => this.addNotifierToQueue(data)));
+
+        if (invoices.length > 0) {
+            await this.partnerInvoiceModel.findByIdAndUpdate(ids, { status: PartnerStatus.FAILED });
         }
-        
     }
 
-    async addNotifierToQueue(referenceData: InvoiceReference){
-        if(referenceData.webhookURL == null) return;
-        const guid = this.makeid()
+    async addNotifierToQueue(referenceData: InvoiceReference) {
+        if (referenceData.webhookURL == null) return;
+        const guid = this.makeid();
         const payload = {
             event: referenceData.event,
             data: {
                 id: guid,
-                referenceId: referenceData.referenceId
-            }
-        }
+                referenceId: referenceData.referenceId,
+            },
+        };
         const body = JSON.stringify(payload);
         const hmac = crypto.createHmac('sha256', referenceData.secretKey);
         hmac.update(body);
         const signature = hmac.digest('hex');
         const headers = {
             'x-Osmo-Signature': signature,
-            'Content-Type': 'application/json'
-        }
+            'Content-Type': 'application/json',
+        };
         const externalTask: ExternalTask = {
             body: payload,
             headers: headers,
             queue: this.QUEUE_NOTIFIER,
-            url: referenceData.webhookURL
-        }
+            url: referenceData.webhookURL,
+        };
 
-        await this.partnerInvoiceModel.findOneAndUpdate({referenceId: referenceData.referenceId}, {status: referenceData.event})
-        this.googleCloudTaskService.createExternalTask(externalTask)
+        await this.partnerInvoiceModel.findOneAndUpdate({ referenceId: referenceData.referenceId }, { status: referenceData.event });
+        this.googleCloudTaskService.createExternalTask(externalTask);
     }
 
     async getUserbyPhone(queries: GetUserbyPhoneDto): Promise<any> {
-        const phoneNumber = `+${queries.phoneNumber}`
+        const phoneNumber = `+${queries.phoneNumber}`;
         const user = await this.userRepository.findOne({
-            relations: {verifications: true},
+            relations: { verifications: true },
             where: {
-                mobile: phoneNumber
-            }
-        })
+                mobile: phoneNumber,
+            },
+        });
         //if(!user) throw new NotFoundException('User not found')
         const [banks, strikeConfig, coins] = await Promise.all([
-            this.bankRepository.find({select: {id: true,name: true}}),
+            this.bankRepository.find({ select: { id: true, name: true } }),
             (await this.partnerConfigRepository.find())[0],
-            this.coinService.getAll()
-        ])
-        const gtqCoin = coins.find((coin) => coin.acronym == CoinEnum.GTQ)
+            this.coinService.getAll(),
+        ]);
+        if (!banks || !strikeConfig) throw new BadRequestException('Partner config not found');
 
+        const gtqCoin = coins.find((coin) => coin.acronym == CoinEnum.GTQ);
+        if (!gtqCoin) throw new BadRequestException('GTQ coin not found');
         const minSendAmount = {
             coin: gtqCoin.acronym,
-            amount: strikeConfig.min
-        }
+            amount: strikeConfig.min,
+        };
 
         const maxSendAmount = {
             coin: gtqCoin.acronym,
-            amount: strikeConfig.max
-        }
+            amount: strikeConfig.max,
+        };
         const requirements = [
             {
-                name: "bankAccountHolder",
-                type: "string",
-                description: "Account Holder Name"
+                name: 'bankAccountHolder',
+                type: 'string',
+                description: 'Account Holder Name',
             },
             {
-                name: "bankAccountNumber",
-                type: "string",
-                description: "Bank Account Number"
+                name: 'bankAccountNumber',
+                type: 'string',
+                description: 'Bank Account Number',
             },
             {
-                name: "accountType",
-                type: "option",
-                description: "Bank Account Type",
-                options: ['SAVINGS','CHECKING']
+                name: 'accountType',
+                type: 'option',
+                description: 'Bank Account Type',
+                options: ['SAVINGS', 'CHECKING'],
             },
             {
-                name: "bankName",
-                type: "option",
-                description: "Bank Name",
-                options: banks
-            }
-        ]
-        const data = {}
-        let newUser = {}
-        if(user){
+                name: 'bankName',
+                type: 'option',
+                description: 'Bank Name',
+                options: banks,
+            },
+        ];
+        const data = { user: {}, minSendAmount: {}, maxSendAmount: {}, requirements: {} };
+        let newUser = {};
+        if (user) {
             newUser = {
-              avatarUrl: user.profilePicture,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              phoneNumber: user.mobile,
-              nationality: user.nationality,
-              kycStatus: user.verifications.kyc
-            }
+                avatarUrl: user.profilePicture,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                phoneNumber: user.mobile,
+                nationality: user.nationality,
+                kycStatus: user.verifications.kyc,
+            };
         }
-        data['user'] = newUser
-        data['minSendAmount'] = minSendAmount
-        data['maxSendAmount'] = maxSendAmount
-        
-        data['requirements'] = requirements
+        data['user'] = newUser;
+        data['minSendAmount'] = minSendAmount;
+        data['maxSendAmount'] = maxSendAmount;
+        data['requirements'] = requirements;
 
-        return data
+        return data;
     }
 
-    async generateInvoice(authUser: AuthUser,data: PartnerGenerateInvoiceDto){
-        const phoneNumber = `+${data.phoneNumber}`
+    async generateInvoice(authUser: AuthUser, data: PartnerGenerateInvoiceDto) {
+        const phoneNumber = `+${data.phoneNumber}`;
 
         const user = await this.userRepository.findOne({
-            relations: {verifications: true},
+            relations: { verifications: true },
             where: {
-                mobile: phoneNumber
-            }
-        }) 
+                mobile: phoneNumber,
+            },
+        });
         //if(!user) throw new NotFoundException('User not found')
-        if(user && data.flowType == PartnerFlow.NoOsmoUserToWallet) throw new BadRequestException('Incorrect flowType since user exists')      
-        if(data.bankAddress !== undefined && data.flowType != PartnerFlow.OsmoUserToBank) throw new BadRequestException('Incorrent flowType since bankData contains data')
-        if(data.bankAddress === undefined && data.flowType == PartnerFlow.OsmoUserToBank) throw new BadRequestException('Bank address can not be empty since flow is OsmoUserToBank')
-        const checkInvoice = await this.partnerInvoiceModel.findOne({referenceId: data.referenceId})
-        if(checkInvoice) throw new BadRequestException('Invoice with that referenceId already exists')
+        if (user && data.flowType == PartnerFlow.NoOsmoUserToWallet) throw new BadRequestException('Incorrect flowType since user exists');
+        if (data.bankAddress !== undefined && data.flowType != PartnerFlow.OsmoUserToBank)
+            throw new BadRequestException('Incorrent flowType since bankData contains data');
+        if (data.bankAddress === undefined && data.flowType == PartnerFlow.OsmoUserToBank)
+            throw new BadRequestException('Bank address can not be empty since flow is OsmoUserToBank');
+        const checkInvoice = await this.partnerInvoiceModel.findOne({ referenceId: data.referenceId });
+        if (checkInvoice) throw new BadRequestException('Invoice with that referenceId already exists');
         const [gtqRate, btcPriceResponse, partnerConfig] = await Promise.all([
             this.coinService.getGTQExchangeRate(),
             this.ibexService.getBtcExchangeRate(),
-            this.partnerConfigRepository.find()
-        ])
-        const btcPrice = btcPriceResponse.rate            
-        let bank: Bank
-        let ibexAccountId = process.env.IBEX_NATIVE_OSMO_ACCOUNT_ID
-        let userId = process.env.IBEX_NATIVE_OSMO_ACCOUNT_NAME
-        const usdAmount = new Decimal(btcPrice).mul(data.amount).mul(Math.pow(10,-8)).toFixed(2)
-        const gtqAmount = new Decimal(usdAmount).mul(gtqRate).toFixed(2)
-        const strikeConfig = partnerConfig[0]
-        let fee = strikeConfig.normalFee
-        if(data.bankAddress !== undefined){
-            fee = strikeConfig.withdrawFee
+            this.partnerConfigRepository.find(),
+        ]);
+        const btcPrice = btcPriceResponse.rate;
+        let bank: Bank | null;
+
+        let ibexAccountId = this.configSerive.getOrThrow('IBEX_NATIVE_OSMO_ACCOUNT_ID');
+        let userId = this.configSerive.getOrThrow('IBEX_NATIVE_OSMO_ACCOUNT_NAME');
+
+        const usdAmount = new Decimal(btcPrice).mul(data.amount).mul(Math.pow(10, -8)).toFixed(2);
+        const gtqAmount = new Decimal(usdAmount).mul(gtqRate).toFixed(2);
+        const strikeConfig = partnerConfig[0];
+        if (!strikeConfig) throw new BadRequestException('Partner config not found');
+        let fee = strikeConfig.normalFee;
+        if (data.bankAddress !== undefined) {
+            fee = strikeConfig.withdrawFee;
         }
-        if(parseFloat(gtqAmount) < strikeConfig.min || parseFloat(gtqAmount) > strikeConfig.max) throw new BadRequestException('Limit out of range')
-        if(user){
+        if (parseFloat(gtqAmount) < strikeConfig.min || parseFloat(gtqAmount) > strikeConfig.max)
+            throw new BadRequestException('Limit out of range');
+        if (user) {
             const ibexAccount = await this.ibexAccountRepository.findOne({
                 where: {
-                    user: {id: user.id}
-                }
-            })
-            userId = user.id
-            ibexAccountId = ibexAccount.account
+                    user: { id: user.id },
+                },
+            });
+            if (!ibexAccount) throw new BadRequestException('User does not have an account');
+            userId = user.id;
+            ibexAccountId = ibexAccount.account;
         }
-        if(data.bankAddress !== undefined){
-            bank = await this.bankRepository.findOneBy({id: data.bankAddress.bankId})
-            if(!bank) throw new BadRequestException('Invalid bank')
+        if (data.bankAddress !== undefined) {
+            const bankAccount = await this.bankRepository.findOneBy({ id: data.bankAddress.bankId });
+            if (!bankAccount) throw new BadRequestException('Bank not found');
+            bank = bankAccount;
+        } else {
+            bank = null;
         }
 
-        const mSats = data.amount * 1000
-        const invoice = await this.ibexService.generateInvoiceForStrike(ibexAccountId,mSats,userId,data.referenceId)
-        const targetAmount  = new Decimal(gtqAmount).minus(new Decimal(gtqAmount).times(fee)).toFixed(2)
+        const mSats = data.amount * 1000;
+        const invoice = await this.ibexService.generateInvoiceForStrike(ibexAccountId, mSats, userId, data.referenceId);
+        const targetAmount = new Decimal(gtqAmount).minus(new Decimal(gtqAmount).times(fee)).toFixed(2);
         const partnerInvoice = new this.partnerInvoiceModel({
             referenceId: data.referenceId,
             flow: data.flowType,
-            bankAccount: data.bankAddress == undefined ? {} : {
-                accountNumber: data.bankAddress.accountNumber,
-                accountHolder: data.bankAddress.accountHolder,
-                accountType: data.bankAddress.accountType,
-                bankName: bank.name,
-                bankCode: bank.code,
-            },
+            bankAccount:
+                data.bankAddress == undefined
+                    ? {}
+                    : {
+                          accountNumber: data.bankAddress.accountNumber,
+                          accountHolder: data.bankAddress.accountHolder,
+                          accountType: data.bankAddress.accountType,
+                          bankName: bank?.name,
+                          bankCode: bank?.code,
+                      },
             description: data.description,
             phoneNumber: phoneNumber,
             bolt11: invoice.invoice.bolt11,
@@ -357,93 +371,85 @@ export class PartnersService {
             },
             targetAmount: {
                 amount: parseFloat(targetAmount),
-                currency: 'GTQ'
+                currency: 'GTQ',
             },
             sourceAmount: {
                 amount: data.amount,
-                currency: 'SATS'
+                currency: 'SATS',
             },
             btcPrice: btcPrice,
             status: PartnerStatus.PENDING,
-            partner: authUser.sub
-        })
+            partner: authUser.sub,
+        });
         const savedInvoice = await partnerInvoice.save();
-        const invoiceObject = savedInvoice.toObject()
-        delete invoiceObject.btcPrice
-        delete invoiceObject._id
-        delete invoiceObject.partner
-        delete invoiceObject.originalAmount
-        const finalData = {}
-        if(user){
+        const invoiceObject: Partial<typeof savedInvoice> = savedInvoice.toObject();
+        delete invoiceObject.btcPrice;
+        delete invoiceObject._id;
+        delete invoiceObject.partner;
+        delete invoiceObject.originalAmount;
+        const finalData = { recipient: {} };
+        if (user) {
             finalData['recipient'] = {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 phoneNumber: user.mobile,
                 nationality: user.nationality,
-                kycStatus: user.verifications.kyc
-            }
+                kycStatus: user.verifications.kyc,
+            };
         }
-        return invoiceObject
+        return invoiceObject;
     }
 
-    async pay(data: LightningInvoiceDto, query: ReceiveQueryDto){
-        try{
+    async pay(data: LightningInvoiceDto, query: ReceiveQueryDto) {
+        try {
             const storedInvoice = await this.partnerInvoiceModel.findOne({
                 referenceId: query.referenceId,
-            })
-            if(!storedInvoice) throw new BadRequestException('Invoice not found')
-            const user = await this.userRepository.findOneBy({id: query.userId})
-            if(storedInvoice.flow != PartnerFlow.NoOsmoUserToWallet){
-                if(!user) throw new BadRequestException('User not found')
+            });
+            if (!storedInvoice) throw new BadRequestException('Invoice not found');
+            const user = await this.userRepository.findOneBy({ id: query.userId });
+            if (!user) throw new BadRequestException('User not found');
+            if (storedInvoice.flow != PartnerFlow.NoOsmoUserToWallet) {
+                if (!user) throw new BadRequestException('User not found');
             }
-            
-            let strategy : PartnerFlowStrategy
-            switch(storedInvoice.flow){
-                case(PartnerFlow.OsmoUserToWallet):
-                strategy = new OsmoWalletUserFlow(
-                    this.appRepository.manager,
-                    storedInvoice,
-                    this.ibexService,                    
-                    user,
-                    data
-                    )
-                break
-                case(PartnerFlow.OsmoUserToBank):
-                strategy = new OsmoWalletUserBank(
-                    this.appRepository.manager,
-                    storedInvoice,
-                    this.ibexService,
-                    data,
-                    user,
-                    this.sendGridService,
-                    this.partnerInvoiceModel
-                )
-                break;
-                case(PartnerFlow.NoOsmoUserToWallet):
-                strategy = new NoOsmoUserWallet(
-                    this.appRepository.manager,
-                    storedInvoice,
-                    this.ibexService,
-                    )
+
+            let strategy: PartnerFlowStrategy;
+            switch (storedInvoice.flow) {
+                case PartnerFlow.OsmoUserToWallet:
+                    strategy = new OsmoWalletUserFlow(this.appRepository.manager, storedInvoice, this.ibexService, user, data);
+                    break;
+                case PartnerFlow.OsmoUserToBank:
+                    strategy = new OsmoWalletUserBank(
+                        this.appRepository.manager,
+                        storedInvoice,
+                        this.ibexService,
+                        data,
+                        user,
+                        this.sendGridService,
+                        this.partnerInvoiceModel,
+                    );
+                    break;
+                case PartnerFlow.NoOsmoUserToWallet:
+                    strategy = new NoOsmoUserWallet(this.appRepository.manager, storedInvoice, this.ibexService);
             }
-            if(strategy instanceof NoOsmoUserWallet){
-               strategy.notify(this.smsService)
-               strategy.redirectToOsmoGtqWallet(data.transaction.invoice.amountMsat)
-            }else{
-                const context = new PartnerFlowContext(strategy)
-                context.execute().then(async response => {
-                    if(storedInvoice.flow == PartnerFlow.OsmoUserToBank) return
-                    const partnerApp = await this.appRepository.findOneBy({name: storedInvoice.partner})
+            if (strategy instanceof NoOsmoUserWallet) {
+                strategy.notify(this.smsService);
+                strategy.redirectToOsmoGtqWallet(data.transaction.invoice.amountMsat);
+            } else {
+                const context = new PartnerFlowContext(strategy);
+                context.execute().then(async (response) => {
+                    if (storedInvoice.flow == PartnerFlow.OsmoUserToBank) return;
+                    const partnerApp = await this.appRepository.findOneBy({ name: storedInvoice.partner });
+                    if (!partnerApp) throw new BadRequestException('Partner not found');
                     this.addNotifierToQueue({
                         referenceId: storedInvoice.referenceId,
                         event: response,
                         webhookURL: partnerApp.webhookURL,
-                        secretKey: `${partnerApp.clientId}@${partnerApp.clientSecret}`
-                    })
-                })
+                        secretKey: `${partnerApp.clientId}@${partnerApp.clientSecret}`,
+                    });
+                });
             }
-        }catch(error){
-            throw new BadRequestException('Error paying')
-        }        
+        } catch (error) {
+            throw new BadRequestException('Error paying');
+        }
     }
 }

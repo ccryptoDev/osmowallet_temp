@@ -22,39 +22,32 @@ import { TransactionGroup } from 'src/entities/transactionGroup.entity';
 import { UserTransactionLimit } from 'src/entities/userTransactionLimit.entity';
 import { TransactionCategory } from 'src/entities/transactionCategory.entity';
 import { PushNotificationModule } from '../push-notification/push-notification.module';
+import { FundingTransactionLimit } from 'src/entities/fundingTransactionLimits.entity';
 
 @Module({
-  imports: [
-    JwtModule.register({}),
-    TypeOrmModule.forFeature([
-      User,
-      Transaction,
-      TransactionDetail,
-      IbexAccount,
-      Wallet,
-      Coin,
-      RecentContact,
-      Period,
-      RecurrentBuy,
-      AutomaticBuy,
-      TransactionGroup,
-      UserTransactionLimit,
-      TransactionCategory
-    ]),
-    PushNotificationModule,
-    IbexModule,
-  ],
-  providers: [
-    TransactionsService,
-    DynamicLinkHelper,
-    SendGridService,
-    GoogleCloudStorageService,
-    MyLogger
-  ],
-  controllers: [TransactionsController],
-  exports: [
-    TransactionsService,
-  ]
-
+    imports: [
+        JwtModule.register({}),
+        TypeOrmModule.forFeature([
+            User,
+            Transaction,
+            TransactionDetail,
+            IbexAccount,
+            Wallet,
+            Coin,
+            RecentContact,
+            Period,
+            RecurrentBuy,
+            AutomaticBuy,
+            TransactionGroup,
+            UserTransactionLimit,
+            TransactionCategory,
+            FundingTransactionLimit,
+        ]),
+        PushNotificationModule,
+        IbexModule,
+    ],
+    providers: [TransactionsService, DynamicLinkHelper, SendGridService, GoogleCloudStorageService, MyLogger],
+    controllers: [TransactionsController],
+    exports: [TransactionsService],
 })
 export class TransactionsModule {}

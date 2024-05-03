@@ -1,13 +1,7 @@
-import { Controller, Get,Post,Req } from '@nestjs/common';
-import { AppService } from './app.service';
-import { Request } from 'express';
+import { Controller } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('App')
+@ApiBearerAuth()
 @Controller()
-export class AppController {
-  constructor(private readonly appService: AppService) {}
-  
-  @Get('referral-source')
-  getReferralSource() {
-    return this.appService.getReferralSource();
-  }
-}
+export class AppController {}

@@ -1,12 +1,21 @@
-import { IsInstance, IsNotEmpty, IsNotEmptyObject, IsObject, IsOptional, IsString } from "class-validator";
-import { IbexLightningPaymentTransaction } from "../../ibex/entities/ibexLightningTransaction";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmptyObject, IsString } from 'class-validator';
+import { IbexLightningPaymentTransaction } from '../../ibex/entities/ibexLightningTransaction';
 
-
-export class PayingInvoiceDto{
-
+export class PayingInvoiceDto {
+    @ApiProperty({
+        description: 'Webhook secret',
+        example: 'mySecret',
+    })
     @IsString()
-    webhookSecret: string
+    webhookSecret!: string;
 
+    @ApiProperty({
+        description: 'Transaction details',
+        example: {
+            /* example transaction object */
+        },
+    })
     @IsNotEmptyObject()
-    transaction: IbexLightningPaymentTransaction
+    transaction!: IbexLightningPaymentTransaction;
 }

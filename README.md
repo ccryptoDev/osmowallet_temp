@@ -55,7 +55,7 @@ $ npm run start:prod
 
 ```bash
   # Inject Staging environment variables
-  $ op inject -i dev.stg.tpl -o .dev.stg
+  $ make generate_env_stg
 ```
 
 ```ts
@@ -95,7 +95,7 @@ $ npm run start:prod
 ```
 
 ```bash
-  # Run project 
+  # Generate a new migration 
   $ npm run start:dev
 ```
 
@@ -175,6 +175,28 @@ The VPC created is different from Default, the purpose of this is to separate ne
 In Send BTC there are 3 ways to send BTC (LNURL, Lightning invoices, and Onchain), to simplify the understanding of those flows, the diagram below represents how they work in general terms when the user executes a transaction. Note that some sends come using FIAT currencies, in this case, there is a FAST BTC BUY process before sending, it is not in the diagram
 
 ![Send BTC drawio (3)](https://github.com/SingularAgency/osmowallet_core/assets/107064136/ecd3dc58-964c-41da-8105-6b214e409395)
+
+### Send Fiat via SMS + Referral
+Referral and Send via SMS share the same flow, the only difference is, that the referral feature is from the ReferralMain Wallet account to the user account, and Send Fiat SMS is from User to User. That means in the Referral module Osmo is the sponsor of funds.
+Here is the flow of them, first the user triggers the invitation, and then when the user creates the account or verifies the phone number the transaction will be completed. If the user has not created the account after 5 days (Send via SMS) or 30 days (referral). The transaction will be reverted, this last one is triggered by a Google Cloud Scheduler to verify pending invitations.
+
+![referral](https://github.com/SingularAgency/osmowallet_core/assets/107064136/3c656d73-743a-4e05-9b42-676e9ff28cc2)
+
+
+### SWAP
+This is the SWAP flow for SELL and BUY BTC, notice that if the transaction is FIAT to FIAT, after creating the transaction, the entire flow will be recalled with different params.
+In addition, the ibex transaction can throw an exception in case OSMO MAIN WALLET does not have sufficient balance, to do the transaction.
+
+| Swap | Recurrent Buy |
+|-----------------|-----------------|
+| ![Swap drawio](https://github.com/SingularAgency/osmowallet_core/assets/107064136/88059f3a-cf09-4c34-b76f-7632990ccf39)    | ![Recurrent Buy drawio](https://github.com/SingularAgency/osmowallet_core/assets/107064136/1735e2ef-b116-48c8-850e-de13d3b2a812)    |
+
+### Send Globally
+For each country, there is a partner (USA -> STRIKE), (MEXICO and Brazil -> THE BITCOIN COMPANY), and so on. So basically we are recycling the same SEND BTC FLOW, so each partner provides us an API to generate Invoices and we need to provide them a Webhook URL to receive payment notifications. This module always will be used to send Fiat over Lightning to a specific bank account.
+
+
+![Send Globally drawio](https://github.com/SingularAgency/osmowallet_core/assets/107064136/e676f4d3-1aca-48e4-bf25-c8f3a98cbdf5)
+
 
 ### Receive via link
 

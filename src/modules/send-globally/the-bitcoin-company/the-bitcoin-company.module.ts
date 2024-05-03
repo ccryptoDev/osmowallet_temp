@@ -1,19 +1,14 @@
+import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { TheBitcoinCompanyService } from './the-bitcoin-company.service';
-import { TheBitcoinCompanyController } from './the-bitcoin-company.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GlobalPayment } from 'src/entities/globalPayment.entity';
-import { HttpModule } from '@nestjs/axios';
+import { TheBitcoinCompanyController } from './the-bitcoin-company.controller';
+import { TheBitcoinCompanyService } from './the-bitcoin-company.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      GlobalPayment
-    ]),
-    HttpModule
-  ],
-  providers: [TheBitcoinCompanyService],
-  controllers: [TheBitcoinCompanyController],
-  exports: [TheBitcoinCompanyService]
+    imports: [TypeOrmModule.forFeature([GlobalPayment]), HttpModule],
+    providers: [TheBitcoinCompanyService],
+    controllers: [TheBitcoinCompanyController],
+    exports: [TheBitcoinCompanyService],
 })
-export class TheBitcoinCompanyModule { }
+export class TheBitcoinCompanyModule {}

@@ -1,0 +1,30 @@
+export interface DtrTransferResponse {
+    id: number;
+    createAt: string;
+    fromId: string;
+    fromIban: string;
+    fromName: string | null;
+    fromIdType: string | null;
+    toId: string;
+    toIban: string;
+    toName: string | null;
+    toIdType: string | null;
+    time: string;
+    service: string;
+    currency: string;
+    amount: number;
+    text: string;
+    loadKey: string;
+    stateOperation: number;
+    reason: number;
+    reasonDesc: string;
+    channelReference: string | null;
+    sinpeReference: string | null;
+    numOperation: number | null;
+    numFee: number | null;
+    amountFee: number;
+    customerIdNumber: string;
+    customerTypeIdNumber: string;
+    clientReference: string;
+    stateOperationDesc: string;
+}

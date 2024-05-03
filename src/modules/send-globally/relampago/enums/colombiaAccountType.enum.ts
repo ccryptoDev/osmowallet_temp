@@ -1,5 +1,4 @@
-
 export enum ColombiaAccountType {
     SAVINGS = 'Savings',
-    CHECKING = 'Checking'
+    CHECKING = 'Checking',
 }

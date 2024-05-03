@@ -1,7 +1,3 @@
-import { BadRequestException, HttpException, HttpStatus } from "@nestjs/common";
+import { BadRequestException } from '@nestjs/common';
 
-export class IbexServiceException extends BadRequestException {
-    constructor(objectOrError?: string | object | any, descriptionOrOptions?: string | object | any) {
-        super(objectOrError, descriptionOrOptions);
-    }
-}
+export class IbexServiceException extends BadRequestException {}
