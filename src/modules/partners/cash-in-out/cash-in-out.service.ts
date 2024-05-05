@@ -36,8 +36,8 @@ export class CashInOutService {
     async getOTP(authUser: AuthUser) {
         const user = await this.userRepository.findOne({
             where: {
-                id: authUser.sub,
-            },
+                id: authUser.sub
+            }
         });
         if (!user) throw new NotFoundException('User not found');
         const otp = otpGenerator.generate(6, {
@@ -52,7 +52,7 @@ export class CashInOutService {
 
         const otpRecord = this.otpRepository.create({
             user: user,
-            otp: Number(otp),
+            otp: otp,
             expiry: expiry,
             type: OTP.TRANSACTION,
         });
@@ -62,14 +62,13 @@ export class CashInOutService {
     }
 
     async getUserbyPhoneOrEmail(queries: GetUserbyPhoneOrEmailDto) {
-        const user = await this.userService.getUserbyPhoneOrEmail(queries);
+        const user = await this.userService.getUserbyPhoneOrEmail(queries)
 
         const fundingMethod = await this.fundingMethodRepository.findOne({
             where: {
-                name: Partner.AKISI,
+              name: Partner.AKISI,
             },
         });
-        if (!fundingMethod) throw new NotFoundException('Funding method not found');
 
         const data = {
             user,
@@ -81,47 +80,42 @@ export class CashInOutService {
     }
 
     async funding(authPartner: AuthUser, { email, phoneNumber, amount }: CashInDto) {
-        const { user } = await this.getUserbyPhoneOrEmail({ email, phoneNumber });
-
+        const { user } = await this.getUserbyPhoneOrEmail({ email, phoneNumber })
+        
         const fundingMethod = await this.fundingMethodRepository.findOne({
             where: {
                 name: Partner.AKISI,
             },
-            relations: { availableCoins: { coin: true } },
+            relations: { availableCoins: { coin: true} },
         });
-        if (!fundingMethod) throw new NotFoundException('Funding method not found');
-        const gtqFundingMethod = fundingMethod.availableCoins.find((method) => method.coin.acronym === CoinEnum.GTQ);
-
-        if (!gtqFundingMethod) throw new NotFoundException('Funding method not found');
 
         const data = {
             fundingMethodId: fundingMethod.id,
             amount,
-            coinId: gtqFundingMethod.coin.id,
-            partner: authPartner.sub,
+            coinId: fundingMethod.availableCoins.find((method) => method.coin.acronym === CoinEnum.GTQ).coin.id,
+            partner: authPartner.sub
         } satisfies FundingDto;
-
+        
         await this.fundingService.fund({ sub: user.id }, data);
     }
     async withdraw(authPartner: AuthUser, { email, phoneNumber, ...body }: CashOutDto) {
-        const { user } = await this.getUserbyPhoneOrEmail({ email, phoneNumber });
-
+        const { user } = await this.getUserbyPhoneOrEmail({ email, phoneNumber })
+        
         const withdrawalMethod = await this.withdrawalMethodRepository.findOne({
-            relations: { availableCoins: { coin: true } },
+            relations: { availableCoins: {coin: true} },
             where: {
-                name: Partner.AKISI,
+              name: Partner.AKISI,
             },
         });
-        if (!withdrawalMethod?.availableCoins) throw new NotFoundException('Withdrawal method not found');
-        const gtqWithdralMethod = withdrawalMethod.availableCoins.find((method) => method.coin.acronym === CoinEnum.GTQ);
-        if (!gtqWithdralMethod) throw new NotFoundException('Withdrawal method not found');
-
+        
         const data = {
             withdrawMethodId: withdrawalMethod.id,
             amount: body.amount,
-            coinId: gtqWithdralMethod.coin.id,
+            coinId: withdrawalMethod.availableCoins.find(
+                (method) => method.coin.acronym === CoinEnum.GTQ,
+                ).coin.id,
             data: JSON.stringify({ token: body.data.token }),
-            partner: authPartner.sub,
+            partner: authPartner.sub
         } satisfies WithdrawDto;
 
         await this.withdrawService.withdraw({ sub: user.id }, data);

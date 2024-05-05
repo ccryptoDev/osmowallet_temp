@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    Injectable,
+    InternalServerErrorException,
+    NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as crypto from 'crypto';
@@ -7,7 +12,6 @@ import { Model } from 'mongoose';
 import { typeSubtypes } from 'src/common/constants/constants';
 import { TransactionType } from 'src/common/enums/transactionsType.enum';
 import { CsvHelper } from 'src/common/helpers/csv.helper';
-import { MyLogger } from 'src/common/loggers/mylogger.logger';
 import { getDateRange } from 'src/common/utils/date-range.util';
 import { BankAccount } from 'src/entities/bank.account.entity';
 import { Coin } from 'src/entities/coin.entity';
@@ -24,7 +28,6 @@ import { FeaturesService } from 'src/modules/features/features.service';
 import { KycService } from 'src/modules/kyc/kyc.service';
 import { CoinEnum } from 'src/modules/me/enums/coin.enum';
 import { GetTransactionsDto } from 'src/modules/transactions/dtos/getTransaction.dto';
-import { UsersService } from 'src/modules/users/users.service';
 import { UserCard } from 'src/schemas/userCard.schema';
 import { AlgoliaService } from 'src/services/algolia/algolia.service';
 import { OnvoService } from 'src/services/onvo/onvo.service';
@@ -43,8 +46,9 @@ import {
 } from 'typeorm';
 import { GetUserCSVDTO, GetUsersDto } from './dtos/getUsers.dto';
 import { TransactionMetricDto } from './dtos/transactionMetric.dto';
+import { UsersService } from 'src/modules/users/users.service';
 import { UpdateUsersDto } from './dtos/updateUser.dto';
-import { MetaMapUser } from 'src/modules/kyc/interfaces/raw-kyc';
+import { MyLogger } from 'src/common/loggers/mylogger.logger';
 
 @Injectable()
 export class AdminUsersService {
@@ -67,7 +71,6 @@ export class AdminUsersService {
         private kycService: KycService,
         private authService: AuthService,
         private algoliaService: AlgoliaService,
-        private userService: UsersService,
         private onvoService: OnvoService,
     ) {}
 
@@ -159,7 +162,9 @@ export class AdminUsersService {
             },
         });
         const tierFeatures = await Promise.all(
-            userLimits.map((userLimit) => this.featureService.getTierFeature(userLimit.feature.id, { sub: id })),
+            userLimits.map((userLimit) =>
+                this.featureService.getTierFeature(userLimit.feature.id, { sub: id }),
+            ),
         );
         return {
             userLimits,
@@ -182,19 +187,21 @@ export class AdminUsersService {
 
     async getTransactionMetrics(query: TransactionMetricDto) {
         const coin = await this.coinRepository.findOneBy({ id: query.coinId });
-        if (!coin) throw new BadRequestException('Invalid coin');
-
         const { startDate, endDate } = getDateRange(query);
 
         const transactionTypes = [...Object.values(TransactionType)];
 
         const transactionMetricsPromises = transactionTypes.map(async (transactionType, i) => {
-            let subtypeNames: string[] = typeSubtypes[transactionType as keyof typeof typeSubtypes];
+            let subtypeNames = typeSubtypes[transactionType];
             if (!Array.isArray(subtypeNames)) {
                 subtypeNames = [subtypeNames];
             }
             if (coin.acronym == CoinEnum.SATS && transactionType == TransactionType.SEND) {
-                subtypeNames = ['debit-btc-transfer-ln', 'debit-btc-transfer-ibexpay', 'debit-btc-transfer-onchain'];
+                subtypeNames = [
+                    'debit-btc-transfer-ln',
+                    'debit-btc-transfer-ibexpay',
+                    'debit-btc-transfer-onchain',
+                ];
             }
             if (coin.acronym == CoinEnum.SATS && transactionType == TransactionType.AUTOCONVERT) {
                 subtypeNames = ['credit-btc-autoconvert-sell'];
@@ -215,9 +222,12 @@ export class AdminUsersService {
                 .orderBy('date', 'ASC');
 
             if (query.userId) {
-                queryBuilder.andWhere('transactionGroup.fromUser.id = :userId OR transactionGroup.toUser.id = :userId', {
-                    userId: query.userId,
-                });
+                queryBuilder.andWhere(
+                    'transactionGroup.fromUser.id = :userId OR transactionGroup.toUser.id = :userId',
+                    {
+                        userId: query.userId,
+                    },
+                );
             }
             const rawData = await queryBuilder.getRawMany();
             const data = [];
@@ -241,7 +251,18 @@ export class AdminUsersService {
                 x: endDate.toISOString(),
             };
             data.push(secondDummyDate);
-            const colors = ['#F9DF38', '#F99038', '#7BF938', '#38E5F9', '#387BF9', '#7038F9', '#D038F9', '#FF0000', '#85747F', '#4E7385']; // Add more colors if there are more transaction types
+            const colors = [
+                '#F9DF38',
+                '#F99038',
+                '#7BF938',
+                '#38E5F9',
+                '#387BF9',
+                '#7038F9',
+                '#D038F9',
+                '#FF0000',
+                '#85747F',
+                '#4E7385',
+            ]; // Add more colors if there are more transaction types
             return {
                 type: transactionType,
                 color: colors[i],
@@ -257,33 +278,33 @@ export class AdminUsersService {
 
     async getTransactionsByUser(id: string, queries: GetTransactionsDto) {
         try {
-            let dateQuery = undefined;
-            if (queries.fromDate !== undefined && queries.toDate != undefined) {
+            let dateQuery = null;
+            if (queries.fromDate != null && queries.toDate != null) {
                 dateQuery = Between(queries.fromDate, queries.toDate);
             }
-            if (queries.fromDate !== undefined && queries.toDate == undefined) {
+            if (queries.fromDate != null && queries.toDate == null) {
                 dateQuery = MoreThanOrEqual(queries.fromDate);
             }
-            if (queries.fromDate === undefined && queries.toDate != undefined) {
+            if (queries.fromDate == null && queries.toDate != null) {
                 dateQuery = LessThanOrEqual(queries.toDate);
             }
-            let coinQuery = undefined;
-            if (queries.coinId != undefined) {
+            let coinQuery = null;
+            if (queries.coinId != null) {
                 coinQuery = Equal(queries.coinId);
             }
 
-            let statusQuery = undefined;
-            if (queries.status !== undefined) {
+            let statusQuery = null;
+            if (queries.status != null) {
                 statusQuery = Equal(queries.status);
             }
-            let amountQuery = undefined;
-            if (queries.fromAmount !== undefined && queries.toAmount != undefined) {
+            let amountQuery = null;
+            if (queries.fromAmount != null && queries.toAmount != null) {
                 amountQuery = Between(queries.fromAmount, queries.toAmount);
             }
-            if (queries.fromAmount !== undefined && queries.toAmount == undefined) {
+            if (queries.fromAmount != null && queries.toAmount == null) {
                 amountQuery = MoreThanOrEqual(queries.fromAmount);
             }
-            if (queries.fromAmount === undefined && queries.toAmount != undefined) {
+            if (queries.fromAmount == null && queries.toAmount != null) {
                 amountQuery = LessThanOrEqual(queries.toAmount);
             }
 
@@ -299,18 +320,17 @@ export class AdminUsersService {
                 },
                 type: In(queries.types),
             };
-            const note = queries.query !== undefined ? Like(`%${queries.query}%`) : '';
             const transactions = await this.transactionGroupRepository.findAndCount({
                 where: [
                     {
                         ...constantQueries,
                         fromUser: { id: id },
-                        note: note,
+                        note: queries.query != null ? Like(`%${queries.query}%`) : null,
                     },
                     {
                         ...constantQueries,
                         toUser: { id: id },
-                        note: note,
+                        note: queries.query != null ? Like(`%${queries.query}%`) : null,
                     },
                 ],
                 skip: offset,
@@ -386,49 +406,7 @@ export class AdminUsersService {
     }
 
     async getKyc(id: string) {
-        const verification = await this.kycVerificationRepository.findOne({
-            relations: {
-                verificationSteps: true,
-            },
-            where: {
-                user: { id: id },
-            },
-        });
-        if (!verification) {
-            return {};
-        }
-        const kycUser = await this.kycService.getKycUser<MetaMapUser>(verification.verificationId);
-        if (kycUser.documents.length == 0) {
-            return {};
-        }
-        const images = kycUser.documents?.[0]?.['photos'];
-        const fields = kycUser.documents[0]?.fields ?? {};
-        const fieldsArray = Object.keys(fields).map((key) => {
-            let separatedKey = key
-                .split(/(?=[A-Z])/)
-                .join(' ')
-                .toLowerCase();
-            separatedKey = separatedKey.charAt(0).toUpperCase() + separatedKey.slice(1);
-            return {
-                name: separatedKey,
-                value: fields?.[key]?.value,
-            };
-        });
-        const liveness = kycUser.steps.find((step: { id: string }) => step.id == 'liveness')?.data;
-        const watchlistsSteps = kycUser.steps.find((step: { id: string }) => step.id == 'watchlists')?.data;
-        const watchlists = watchlistsSteps?.map((watchlistStep: { watchlist: { name: string }; searchResult: string }) => {
-            return {
-                name: watchlistStep.watchlist.name,
-                result: watchlistStep.searchResult,
-            };
-        });
-        return {
-            verification,
-            images,
-            liveness,
-            watchlists,
-            fields: fieldsArray,
-        };
+        return await this.kycService.getRawKyc(id);
     }
 
     async rejectKyc(id: string) {
@@ -459,7 +437,6 @@ export class AdminUsersService {
                 id: id,
             },
         });
-        if (!userUpdated) throw new BadRequestException('Invalid user');
         await this.algoliaService.saveUser(userUpdated);
     }
 
@@ -471,7 +448,6 @@ export class AdminUsersService {
                 user: { id: id },
             },
         });
-        if (!verification) throw new BadRequestException('Invalid verification');
         await this.verificationRepository.update(verification.id, {
             email: true,
         });
@@ -481,7 +457,6 @@ export class AdminUsersService {
                 id: id,
             },
         });
-        if (!userUpdated) throw new BadRequestException('Invalid user');
         await this.algoliaService.saveUser(userUpdated);
     }
 
@@ -493,7 +468,6 @@ export class AdminUsersService {
                 user: { id: id },
             },
         });
-        if (!verification) throw new BadRequestException('Invalid verification');
         await this.verificationRepository.update(verification.id, {
             mobile: true,
         });
@@ -503,7 +477,6 @@ export class AdminUsersService {
                 id: id,
             },
         });
-        if (!userUpdated) throw new BadRequestException('Invalid user');
         await this.algoliaService.saveUser(userUpdated);
     }
 
@@ -519,7 +492,6 @@ export class AdminUsersService {
                 id: id,
             },
         });
-        if (!userUpdated) throw new BadRequestException('Invalid user');
         await this.algoliaService.saveUser(userUpdated);
     }
 
@@ -535,7 +507,6 @@ export class AdminUsersService {
                 id: id,
             },
         });
-        if (!userUpdated) throw new BadRequestException('Invalid user');
         await this.algoliaService.saveUser(userUpdated);
     }
 
@@ -581,19 +552,18 @@ export class AdminUsersService {
             const userCard = await this.userCardModel.findOne({ userId: user.id });
 
             if ((data?.email !== undefined || data?.mobile !== undefined) && userCard) {
-                await this.onvoService.updateCustomer({ email: data?.email, phone: data?.mobile }, userCard.customerId);
+                await this.onvoService.updateCustomer(
+                    { email: data?.email, phone: data?.mobile },
+                    userCard.customerId,
+                );
             }
             if (data.password) {
                 data.password = await this.hashPassword(data.password);
             }
 
-            await this.userRepository.update(id, {
-                ...data,
-                pin: data.pin === null ? null : data.pin,
-            });
+            await this.userRepository.update(id, data);
 
             const userUpdated = await this.userRepository.findOneBy({ id });
-            if (!userUpdated) throw new BadRequestException('Invalid user');
 
             await this.algoliaService.saveUser(userUpdated);
 

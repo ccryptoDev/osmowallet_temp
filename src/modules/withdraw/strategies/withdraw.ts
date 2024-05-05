@@ -1,3 +1,3 @@
 export interface Withdraw {
-    withdraw(): Promise<any>;
+  withdraw(): Promise<any>;
 }

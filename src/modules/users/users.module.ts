@@ -9,12 +9,17 @@ import { ResidenceChange, ResidenceChangeSchema } from 'src/schemas/residence-ch
 import { AlgoliaService } from 'src/services/algolia/algolia.service';
 
 @Module({
-    imports: [
-        MongooseModule.forFeature([{ name: ResidenceChange.name, schema: ResidenceChangeSchema }]),
-        TypeOrmModule.forFeature([User, Bank]),
-    ],
-    providers: [UsersService, AlgoliaService],
-    controllers: [UsersController],
-    exports: [UsersService],
+  imports: [
+    MongooseModule.forFeature([
+      {name: ResidenceChange.name, schema: ResidenceChangeSchema}
+    ]),
+    TypeOrmModule.forFeature([
+      User,
+      Bank
+    ])
+  ],
+  providers: [UsersService,AlgoliaService],
+  controllers: [UsersController],
+  exports: [UsersService]
 })
 export class UsersModule {}

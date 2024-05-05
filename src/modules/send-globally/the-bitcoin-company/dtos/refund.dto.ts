@@ -1,18 +1,9 @@
-import { IsString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsString } from "class-validator";
 
 export class RefundDTO {
-    @ApiProperty({
-        description: 'The ID of the refund',
-        example: '12345',
-    })
     @IsString()
-    id!: string;
+    id: string
 
-    @ApiProperty({
-        description: 'The PR of the refund',
-        example: 'PR123',
-    })
     @IsString()
-    pr!: string;
-}
+    pr: string
+  }

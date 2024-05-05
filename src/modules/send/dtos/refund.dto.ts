@@ -1,9 +1,11 @@
-import { CreateTransaction } from './transaction.dto';
+import { IsString } from "class-validator"
+import { CreateTransaction } from "./transaction.dto"
+
 
 export interface RefundSendDto {
-    transactionGroupId?: string;
+    transactionGroupId?: string
 
-    createSendTransaction: CreateTransaction;
+    createSendTransaction: CreateTransaction
 
-    refundToOsmo: boolean;
+    refundToOsmo: boolean
 }

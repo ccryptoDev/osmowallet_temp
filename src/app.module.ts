@@ -2,7 +2,7 @@ import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/c
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
-import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CustomExceptionFilter } from './common/loggers/customException.filter';
@@ -51,8 +51,6 @@ import { GoogleCloudStorageService } from './services/google-cloud-storage/googl
 import { GoogleCloudTasksService } from './services/google-cloud-tasks/google-cloud-tasks.service';
 import { OnvoService } from './services/onvo/onvo.service';
 import { SmsService } from './services/sms/sms.service';
-import { RidiviModule } from './services/ridivi/ridivi.module';
-import { StillmanModule } from './modules/stillman/stillman.module';
 
 @Module({
     imports: [
@@ -61,13 +59,13 @@ import { StillmanModule } from './modules/stillman/stillman.module';
             envFilePath: '.env.development',
             load: [typeorm],
         }),
-        MongooseModule.forRoot(process.env.MONGO_URL_CONNECTION ?? '', {
+        MongooseModule.forRoot(process.env.MONGO_URL_CONNECTION, {
             autoCreate: true,
             dbName: process.env.MONGO_DB_NAME,
         }),
         TypeOrmModule.forRootAsync({
             inject: [ConfigService],
-            useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => configService.getOrThrow('typeorm'),
+            useFactory: async (configService: ConfigService) => configService.get('typeorm'),
         }),
         TypeOrmModule.forFeature([...entitiesIndex]),
         AuthModule,
@@ -103,8 +101,6 @@ import { StillmanModule } from './modules/stillman/stillman.module';
         BalanceUpdaterModule,
         WalletsModule,
         CardModule,
-        RidiviModule,
-        StillmanModule,
     ],
     providers: [
         AppService,
@@ -142,11 +138,10 @@ export class AppModule implements NestModule {
                 '/swap/recurrent-buys/process',
                 '/transactions/amassed-amounts/reset',
                 '/partners/notify/pending',
-                { path: '/referral/check-referral-invitations', method: RequestMethod.POST },
-                { path: '/automations/transactions-migrate', method: RequestMethod.POST },
-                { path: '/ridivi/check-transfer-status', method: RequestMethod.POST },
-                { path: '/ridivi/register-number', method: RequestMethod.POST },
-                { path: '/ridivi/accounts', method: RequestMethod.POST },
+                { path: '/referral/check-referral-invitations', method: RequestMethod.POST},
+                { path: '/automations/transactions-migrate', method: RequestMethod.POST},
+                { path: '/solfin/person', method: RequestMethod.POST },
+                { path: '/solfin/iban', method: RequestMethod.POST },
                 { path: '/kyc/:id/raw-kyc', method: RequestMethod.GET },
                 { path: '/cashout/create-transaction', method: RequestMethod.POST },
                 { path: '/commerces', method: RequestMethod.PUT },
@@ -161,7 +156,6 @@ export class AppModule implements NestModule {
                 { path: '/referral/refund', method: RequestMethod.POST },
                 { path: '/send-globally', method: RequestMethod.POST },
                 { path: '/automations/transactions/validated', method: RequestMethod.POST },
-                { path: '/automations/stillman', method: RequestMethod.POST },
             );
     }
 }

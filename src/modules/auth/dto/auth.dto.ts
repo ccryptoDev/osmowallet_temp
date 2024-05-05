@@ -1,30 +1,17 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { GrantType } from '../enums/granTypes.enum';
+import { IsEnum, IsNotEmpty, IsString } from "class-validator"
+import { GrantType } from "../enums/granTypes.enum"
 
-export abstract class AuthDto {
-    @ApiProperty({
-        description: 'The client ID',
-        example: '1234567890',
-    })
+
+export abstract class AuthDto{
     @IsString()
     @IsNotEmpty()
-    clientId!: string;
-
-    @ApiProperty({
-        description: 'The client secret',
-        example: 'secretpassword',
-    })
+    clientId: string
+    
     @IsString()
     @IsNotEmpty()
-    clientSecret!: string;
+    clientSecret: string
 
-    @ApiProperty({
-        description: 'The grant type',
-        example: 'password',
-        enum: GrantType,
-    })
     @IsEnum(GrantType)
     @IsNotEmpty()
-    grantType: GrantType = GrantType.Password;
+    grantType: GrantType = GrantType.Password
 }

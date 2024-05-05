@@ -7,44 +7,40 @@ import { GrantType } from 'src/modules/auth/enums/granTypes.enum';
 import { AdminAuthDto } from './dtos/adminauth.dto';
 import { AdminAccessTokenGuard } from './guards/accessToken.guard';
 import { User } from 'src/common/decorators/user.decorator';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+
 
 @Controller('admin/auth')
-@ApiTags('Admin Authentication')
 export class AdminAuthController {
-    constructor(private adminAuthService: AdminAuthService) {}
+    
+    constructor(private adminAuthService: AdminAuthService){}
 
     @Post('signin')
-    @ApiOperation({ summary: 'Sign in with passkey or email and password' })
-    signin(@Req() req: Request, @Body() data: AdminAuthDto) {
-        if (req.headers.authorization) {
-            return this.adminAuthService.signinWithPasskey(req, data);
+    signin(@Req() req: Request, @Body() data: AdminAuthDto){
+        if(req.headers.authorization){
+            return this.adminAuthService.signinWithPasskey(req,data)
         }
-        return this.adminAuthService.signinWithEmailAndPassword(data);
+        return this.adminAuthService.signinWithEmailAndPassword(data)
     }
-
+    
     @UseGuards(AdminRefreshTokenGuard)
     @Post('refresh-token')
-    @ApiOperation({ summary: 'Refresh access and refresh tokens' })
-    @ApiBearerAuth()
-    refreshTokens(@User() user: AuthUser, @Body() data: AdminAuthDto) {
-        if (data.grantType != GrantType.RefreshToken) throw new UnauthorizedException();
-        return this.adminAuthService.refreshTokens(user, data);
+    refreshTokens(@Req() req: Request, @Body() data: AdminAuthDto) {
+        if(data.grantType != GrantType.RefreshToken) throw new UnauthorizedException()
+        const authUser: AuthUser = {sub: req.user['sub']}
+        return this.adminAuthService.refreshTokens(authUser,data);
     }
 
     @UseGuards(AdminAccessTokenGuard)
     @Post('2fa/active')
-    @ApiOperation({ summary: 'Activate 2FA' })
-    @ApiBearerAuth()
     active2FA(@User() user: AuthUser) {
         return this.adminAuthService.activate2FA(user);
     }
 
     @UseGuards(AdminAccessTokenGuard)
     @Post('2fa/deactive')
-    @ApiOperation({ summary: 'Deactivate 2FA' })
-    @ApiBearerAuth()
     deactive2FA(@User() user: AuthUser) {
         return this.adminAuthService.deactivate2FA(user);
     }
+
+
 }

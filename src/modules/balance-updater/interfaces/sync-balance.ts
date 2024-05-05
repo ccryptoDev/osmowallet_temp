@@ -1,3 +1,4 @@
+
 /**
  * Interface for synchronizing balance information when a user creates their bank account in a third-party system.
  */
@@ -13,6 +14,6 @@ export interface SyncBalance {
 }
 
 export interface SyncBalance {
-    userId: string;
-    country: string;
+    userId: string
+    country: string
 }

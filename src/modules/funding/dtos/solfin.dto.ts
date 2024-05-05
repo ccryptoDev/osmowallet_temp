@@ -1,11 +1,31 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsEmail, IsIBAN, IsString } from "class-validator"
 
-export class SinpeFundingDto {
-    @ApiProperty({
-        description: 'The IBAN from which the funding is made',
-        example: 'NL91ABNA0417164300',
-    })
+
+export class SolfinFundingDto {
+    @IsIBAN()
+    ibanFrom: string
+
     @IsString()
-    iban!: string;
+    nameFrom: string
+
+    @IsEmail()
+    emailFrom: string
+
+    @IsString()
+    documentFrom: string
+
+    @IsString()
+    documentTypeFrom: number
+
+    @IsString()
+    description: string = ''
 }
+
+// {
+//     "ibanFrom": "CR51012300120067843001",
+//     "nameFrom": "David Mauricio Díaz Medrano",
+//     "emailFrom": "dmdiazm@yahoo.com",
+//     "documentFrom": "132000104527",
+//     "documentTypeFrom": "1",
+//     "description": "osmo test"
+// }

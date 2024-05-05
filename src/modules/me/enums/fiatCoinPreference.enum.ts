@@ -1,3 +1,5 @@
+
+
 export enum FiatCoinPreference {
     USD = 'USD',
     GTQ = 'GTQ',
@@ -7,5 +9,5 @@ export enum FiatCoinPreference {
     HNL = 'HNL',
     BZD = 'BZD',
     MXN = 'MXN',
-    SVC = 'SVC',
+    SVC = 'SVC'
 }

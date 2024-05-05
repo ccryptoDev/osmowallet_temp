@@ -1,8 +1,8 @@
-import { ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments } from 'class-validator';
+import { ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments } from "class-validator";
 
-@ValidatorConstraint({ name: 'isNull', async: false })
+@ValidatorConstraint({ name: "isNull", async: false })
 export class IsNullValue implements ValidatorConstraintInterface {
-    validate(value: unknown) {
+    validate(value: any, args: ValidationArguments) {
         return value === null;
     }
 

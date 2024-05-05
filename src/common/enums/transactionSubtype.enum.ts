@@ -1,3 +1,5 @@
+
+
 export enum TransactionSubtype {
     CREDIT_STABLE_OSMO = 'credit-stable-osmo',
     DEBIT_STABLE_OSMO = 'debit-stable-osmo',
@@ -28,6 +30,8 @@ export enum TransactionSubtype {
     CREDIT_FIAT_FUNDING = 'credit-fiat-funding',
     CREDIT_FIAT_TRANSFER = 'credit-fiat-transfer',
     CREDIT_BTC_BUY = 'credit-btc-buy',
-    DEBIT_FIAT_TRANSFER = 'debit-fiat-transfer',
+    DEBIT_FIAT_TRANSFER = 'debit-fiat-transfer'
     /// ADMIN
+    
+
 }

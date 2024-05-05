@@ -1,10 +1,13 @@
-import { ClassSerializerInterceptor, Controller, UseGuards, UseInterceptors } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Controller,UseGuards,UseInterceptors,ClassSerializerInterceptor,Post,Get,Req } from '@nestjs/common';
 import { AccessTokenGuard } from 'src/modules/auth/guards/accessToken.guard';
+import { TiersService } from './tiers.service';
+import { Request } from 'express';
 
-@ApiTags('tiers')
-@ApiBearerAuth()
+
 @UseGuards(AccessTokenGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('tiers')
-export class TiersController {}
+export class TiersController {
+    constructor(private tiersService: TiersService){}
+
+}

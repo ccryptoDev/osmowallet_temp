@@ -1,4 +1,7 @@
-export enum SMSTag {
+
+
+enum SMSTag{
     MobileVerification = 'mobile-verification',
-    Referral = 'referral',
+    Referral = 'referral'
 }
+export default SMSTag

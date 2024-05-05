@@ -10,8 +10,15 @@ import { Wallet } from 'src/entities/wallet.entity';
 import { GoogleCloudTasksService } from 'src/services/google-cloud-tasks/google-cloud-tasks.service';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Nit, Transaction, TransactionGroup, Wallet])],
-    controllers: [BillsController],
-    providers: [BillsService, InfileService, GoogleCloudTasksService],
+  imports: [
+    TypeOrmModule.forFeature([
+      Nit,
+      Transaction,
+      TransactionGroup,
+      Wallet,
+    ])
+  ],
+  controllers: [BillsController],
+  providers: [BillsService,InfileService,GoogleCloudTasksService]
 })
 export class BillsModule {}

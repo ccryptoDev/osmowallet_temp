@@ -1,17 +1,11 @@
-import {
-    EmailAttachmentStructure,
-    EmailContentStructure,
-    EmailFromStructure,
-    EmailToStructure,
-    SendgridTemplate,
-} from './sendgridBase.template';
+import { EmailAttachmentStructure, EmailContentStructure, EmailFromStructure, EmailToStructure, SendgridTemplate } from "./sendgridBase.template";
 
 /*
     This class send email verification to the user extending of base class
  */
-export class PasswordResetTemplate extends SendgridTemplate {
+export class PasswordResetTemplate extends SendgridTemplate{
     /// The link is where the user will be redirected after click the button in the email
-    private link: string = '';
+    private link: string = ''
 
     /// This template in html format will be displayed in the email
     template: string = `
@@ -43,22 +37,22 @@ export class PasswordResetTemplate extends SendgridTemplate {
                 </div>
                 </body>
                 </html>
-    `;
+    `
     constructor(
         to: Array<EmailToStructure>,
         token: string,
         private username: string,
         attachments?: Array<EmailAttachmentStructure>,
-    ) {
-        super(to, attachments);
-        this.username = username;
-        const emailContent = new EmailContentStructure();
-        const fromContent = new EmailFromStructure();
-        this.from = fromContent;
-        this.link = `https://${process.env.APP_SUBDOMAIN}.osmowallet.com/password-reset/?token=${token}`;
-        this.template = this.template.replace('***link***', this.link);
-        this.subject = 'Restablecimiento de contraseña';
-        emailContent.value = this.template;
-        this.content = [emailContent];
+        ){
+        super(to,attachments)
+        this.username = username
+        var emailContent = new EmailContentStructure()
+        var fromContent = new EmailFromStructure()
+        this.from = fromContent
+        this.link = `https://${process.env.APP_SUBDOMAIN}.osmowallet.com/password-reset/?token=${token}`
+        this.template = this.template.replace('***link***',this.link)
+        this.subject = 'Restablecimiento de contraseña'
+        emailContent.value = this.template
+        this.content = [emailContent]        
     }
 }

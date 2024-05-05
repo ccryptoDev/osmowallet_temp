@@ -1,137 +1,170 @@
 import {
-    Body,
-    ClassSerializerInterceptor,
-    Controller,
-    Delete,
-    Get,
-    Param,
-    Patch,
-    Post,
-    Put,
-    UploadedFile,
-    UseGuards,
-    UseInterceptors,
+  Controller,
+  Patch,
+  Param,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+  Get,
+  Post,
+  Put,
+  Req,
+  Body,
+  ClassSerializerInterceptor,
+  Delete,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { User } from 'src/common/decorators/user.decorator';
+import { Request } from 'express';
 import { AccessTokenGuard } from 'src/modules/auth/guards/accessToken.guard';
-import { AuthUser } from '../auth/payloads/auth.payload';
-import { UsersService } from '../users/users.service';
-import { BankAccountDto, DeleteBankAccountDTO, UpdateBankAccountDTO } from './dto/banks.account.dto';
-import { EditEmailDto } from './dto/editEmail.dto';
-import { EditMobileDto } from './dto/editMobile.dto';
+import { BankAccountDto } from './dto/banks.account.dto';
 import { PreferenceDto } from './dto/preference.dto';
 import { ProfilePictureDto } from './dto/profilePicture.dto';
-import { UpdateResidenceDto } from './dto/residence-update.dto';
-import { UpdateUsernameDto } from './dto/updateUsername.dto';
 import { MeService } from './me.service';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { AuthUser } from '../auth/payloads/auth.payload';
+import { UpdateUsernameDto } from './dto/updateUsername.dto';
+import { EditEmailDto } from './dto/editEmail.dto';
+import { EditMobileDto } from './dto/editMobile.dto';
+import { UpdateResidenceDto } from './dto/residence-update.dto';
+import { User } from 'src/common/decorators/user.decorator';
+import { UsersService } from '../users/users.service';
+import { UpdateReferralSourceDto } from './dto/updateReferralSource.dto';
 
 @UseGuards(AccessTokenGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@ApiTags('me')
-@ApiBearerAuth()
 @Controller('me')
 export class MeController {
-    constructor(
-        private meService: MeService,
-        private userService: UsersService,
-    ) {}
+  constructor(
+    private meService: MeService,
+    private userService: UsersService
+  ) {}
 
-    @Get('/residence')
-    @ApiOperation({ summary: 'Get the residence change' })
-    getResidenceChanged(@User() user: AuthUser) {
-        return this.userService.getResidenceChange(user);
-    }
+  @Get('/residence')
+  getResidenceChanged(@User() user: AuthUser) {
+    return this.userService.getResidenceChange(user)
+  }
 
-    @Patch('/residence')
-    @ApiOperation({ summary: 'Update the residence' })
-    updateResidence(@User() user: AuthUser, @Body() data: UpdateResidenceDto) {
-        return this.userService.updateResidence(user.sub, data);
-    }
+  @Patch('/residence')
+  updateResidence(@User() user: AuthUser,@Req() req: Request,@Body() data: UpdateResidenceDto) {
+    return this.userService.updateResidence(user.sub,data)
+  }
 
-    @Patch('/mobile')
-    @ApiOperation({ summary: 'Update the phone number' })
-    updatePhone(@User() user: AuthUser, @Body() data: EditMobileDto) {
-        return this.meService.updatePhone(user, data);
-    }
+  @Patch('/mobile')
+  updatePhone(@Req() req: Request,@Body() data: EditMobileDto) {
+    return this.meService.updatePhone(req.user as AuthUser,data)
+  }
 
-    @Delete('/')
-    @ApiOperation({ summary: 'Delete the account' })
-    deleteAccount(@User() user: AuthUser) {
-        return this.meService.deleteOsmoAccount(user);
-    }
+  @Delete('/')
+  deleteAccount(@Req() req: Request) {
+    return this.meService.deleteOsmoAccount(req.user as AuthUser)
+  }
 
-    @Patch('/email')
-    @ApiOperation({ summary: 'Update the email' })
-    updateEmail(@User() user: AuthUser, @Body() data: EditEmailDto) {
-        return this.meService.updateEmail(user, data);
-    }
+  @Patch('/email')
+  updateEmail(@Req() req: Request, @Body() data: EditEmailDto) {
+    return this.meService.updateEmail(req.user as AuthUser, data);
+  }
 
-    @Patch('/username')
-    @ApiOperation({ summary: 'Update the username' })
-    updateUsername(@User() user: AuthUser, @Body() data: UpdateUsernameDto) {
-        return this.meService.updateUsername(user, data);
-    }
+  @Patch('/username')
+  updateUsername(@Req() req: Request, @Body() data: UpdateUsernameDto) {
+    return this.meService.updateUsername(req.user as AuthUser, data);
+  }
 
-    @Get()
-    @ApiOperation({ summary: 'Get the profile' })
-    async getProfile(@User() user: AuthUser) {
-        return this.meService.getProfile(user);
-    }
+  @Get()
+  async getProfile(@Req() req: Request) {
+    const authUser: AuthUser = {
+      sub: req.user['sub'],
+    };
+    return this.meService.getProfile(authUser);
+  }
 
-    @Patch('profile-picture')
-    @ApiOperation({ summary: 'Update the profile picture' })
-    @UseInterceptors(FileInterceptor('file'))
-    updateProfilePicture(@User() user: AuthUser, @UploadedFile() file: Express.Multer.File, @Body() data: ProfilePictureDto) {
-        return this.meService.updateProfilePicture(user, file, data);
-    }
+  @Patch('profile-picture')
+  @UseInterceptors(FileInterceptor('file'))
+  updateProfilePicture(
+    @Req() req: Request,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() data: ProfilePictureDto,
+  ) {
+    const authUser: AuthUser = {
+      sub: req.user['sub'],
+    };
+    return this.meService.updateProfilePicture(authUser, file, data);
+  }
 
-    @Post('bank-accounts')
-    @ApiOperation({ summary: 'Create a bank account' })
-    createBankAccount(@User() user: AuthUser, @Body() data: BankAccountDto) {
-        return this.meService.createBankAccount(user, data);
-    }
+  @Post('bank-accounts')
+  createBankAccount(@Req() req: Request, @Body() data: BankAccountDto) {
+    const authUser: AuthUser = {
+      sub: req.user['sub'],
+    };
+    return this.meService.createBankAccount(authUser, data);
+  }
 
-    @Get('bank-accounts')
-    @ApiOperation({ summary: 'Get bank accounts' })
-    getBankAccounts(@User() user: AuthUser) {
-        return this.meService.getBankAccounts(user);
-    }
+  @Get('bank-accounts')
+  getBankAccounts(@Req() req: Request) {
+    const authUser: AuthUser = {
+      sub: req.user['sub'],
+    };
+    return this.meService.getBankAccounts(authUser);
+  }
 
-    @Put('bank-accounts/:id')
-    @ApiOperation({ summary: 'Update a bank account' })
-    updatebankAccount(@User() user: AuthUser, @Body() data: BankAccountDto, @Param() bankAccountDto: UpdateBankAccountDTO) {
-        return this.meService.updateBankAccount(user, data, bankAccountDto.id);
-    }
+  @Put('bank-accounts/:id')
+  updatebankAccount(
+    @Req() req: Request,
+    @Body() data: BankAccountDto,
+    @Param() param,
+  ) {
+    const authUser: AuthUser = {
+      sub: req.user['sub'],
+    };
+    const bankId = param.id;
+    return this.meService.updateBankAccount(authUser, data, bankId);
+  }
 
-    @Delete('bank-accounts/:id')
-    @ApiOperation({ summary: 'Delete a bank account' })
-    deleteBankAccount(@User() user: AuthUser, @Param() bankAccountDto: DeleteBankAccountDTO) {
-        return this.meService.deleteBankAccount(user, bankAccountDto.id);
-    }
+  @Delete('bank-accounts/:id')
+  deleteBankAccount(@Req() req: Request, @Param() param) {
+    const authUser: AuthUser = {
+      sub: req.user['sub'],
+    };
+    const bankId = param.id;
+    return this.meService.deleteBankAccount(authUser, bankId);
+  }
 
-    @Get('wallets')
-    @ApiOperation({ summary: 'Get wallets' })
-    getWallets(@User() user: AuthUser) {
-        return this.meService.getWallets(user);
-    }
+  @Get('wallets')
+  getWallets(@Req() req: Request) {
+    const authUser: AuthUser = {
+      sub: req.user['sub'],
+    };
+    return this.meService.getWallets(authUser);
+  }
 
-    @Get('preferences')
-    @ApiOperation({ summary: 'Get preferences' })
-    getPreferences(@User() user: AuthUser) {
-        return this.meService.getPreferences(user);
-    }
+  @Get('preferences')
+  getPreferences(@Req() req: Request) {
+    const authUser: AuthUser = {
+      sub: req.user['sub'],
+    };
+    return this.meService.getPreferences(authUser);
+  }
 
-    @Put('preferences')
-    @ApiOperation({ summary: 'Update preferences' })
-    updatePreferences(@User() user: AuthUser, @Body() data: PreferenceDto) {
-        return this.meService.updatePreference(user, data);
-    }
+  @Put('preferences')
+  updatePreferences(@Req() req: Request, @Body() data: PreferenceDto) {
+    const authUser: AuthUser = {
+      sub: req.user['sub'],
+    };
+    return this.meService.updatePreference(authUser, data);
+  }
 
-    @Get('recent-contacts')
-    @ApiOperation({ summary: 'Get recent contacts' })
-    getRecentContacts(@User() user: AuthUser) {
-        return this.meService.getRecentContacts(user);
-    }
+  @Get('recent-contacts')
+  getRecentContacts(@Req() req: Request) {
+    const authUser: AuthUser = {
+      sub: req.user['sub'],
+    };
+    return this.meService.getRecentContacts(authUser);
+  }
+
+  @Put('referral-source')
+  updateReferralSource(@Req() req: Request, @Body() data: UpdateReferralSourceDto) {
+    const authUser: AuthUser = {
+      sub: req.user['sub']
+    };
+    return this.meService.updateReferralSource(authUser, data);
+  }
+  
 }

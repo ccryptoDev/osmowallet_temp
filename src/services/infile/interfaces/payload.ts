@@ -1,4 +1,6 @@
+
+
 export interface InfilePayload {
-    billId: string;
-    xml: any;
+    billId: string
+    xml: any
 }

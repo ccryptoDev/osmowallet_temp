@@ -1,35 +1,39 @@
+
+
+import { BeneficiaryType } from 'src/modules/send-globally/strike/enums/beneficiaryType.enum';
+import { TransferType } from 'src/modules/send-globally/strike/enums/transferType.enum';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { AccountType } from 'src/modules/send-globally/strike/enums/accountType.enum';
-import { TransferType } from 'src/modules/send-globally/strike/enums/transferType.enum';
 
 export type StrikeBankPaymentMethodDocument = StrikeBankPaymentMethod & Document;
 
-@Schema({ timestamps: true })
+@Schema({timestamps: true})
 export class StrikeBankPaymentMethod {
-    @Prop({ required: true })
-    userId!: string;
 
     @Prop({ required: true })
-    strikeId!: string;
+    userId: string
+
+    @Prop({ required: true })
+    strikeId: string
 
     @Prop({ required: true, enum: TransferType })
-    transferType!: TransferType;
+    transferType: TransferType;
 
     @Prop({ required: true })
-    accountNumber!: string;
+    accountNumber: string;
 
     @Prop({ required: true })
-    routingNumber!: string;
+    routingNumber: string;
 
     @Prop({ required: true, enum: AccountType })
-    accountType!: AccountType;
+    accountType: AccountType;
 
     @Prop({ required: true })
-    bankName!: string;
+    bankName: string;
 
     @Prop({ required: true, type: Object })
-    bankAddress!: {
+    bankAddress: {
         country: string;
         state?: string;
         city: string;
@@ -38,12 +42,12 @@ export class StrikeBankPaymentMethod {
     };
 
     @Prop({ required: true, type: [Object] })
-    beneficiaries!: {
+    beneficiaries: {
         type: string;
         name: string;
         email: string;
         phoneNumber: string;
-        url: string;
+        url: string
     }[];
 }
 

@@ -1,5 +1,7 @@
+
+
 export enum RelampagoMethod {
     CLABE = 'clabe',
     DEBIT_CARD = 'debitCard',
-    PHONE_NUMBER = 'phoneNumber',
+    PHONE_NUMBER = 'phoneNumber'
 }

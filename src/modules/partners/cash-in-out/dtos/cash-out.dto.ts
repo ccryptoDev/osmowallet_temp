@@ -1,23 +1,24 @@
-import { IsEmail, IsNumber, IsOptional, ValidateNested } from 'class-validator';
-import { IsMobilePhoneWithoutPlus } from '../../dtos/getUser.dto';
+import { IsEmail, IsNumber, IsOptional, ValidateNested } from "class-validator"
+import { IsMobilePhoneWithoutPlus } from "../../dtos/getUser.dto"
 
-export class Data {
+
+class Data {
     @IsNumber()
-    token!: number;
+    token: number
 }
 
 export class CashOutDto {
     @IsMobilePhoneWithoutPlus()
     @IsOptional()
-    phoneNumber!: string;
-
+    phoneNumber: string
+    
     @IsEmail()
     @IsOptional()
-    email!: string;
+    email: string
 
     @IsNumber()
-    amount!: number;
+    amount: number
 
     @ValidateNested()
-    data!: Data;
+    data: Data
 }

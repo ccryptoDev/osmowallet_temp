@@ -1,12 +1,9 @@
-import { IsString } from 'class-validator';
-import { AuthDto } from './auth.dto';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsString } from "class-validator";
+import { AuthDto } from "./auth.dto";
 
-export class InputDto extends AuthDto {
-    @ApiProperty({
-        description: 'The input value',
-        example: 'example input',
-    })
+
+export class InputDto extends AuthDto{
+
     @IsString()
-    input!: string;
+    input: string
 }

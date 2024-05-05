@@ -1,29 +1,26 @@
-import { Body, ClassSerializerInterceptor, Controller, Get, Post, UseGuards, UseInterceptors } from '@nestjs/common';
-import { User } from 'src/common/decorators/user.decorator';
+import { Body, ClassSerializerInterceptor, Controller, Get, Post, Req, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
-import { AuthUser } from '../auth/payloads/auth.payload';
 import { AutoconvertService } from './autoconvert.service';
+import { AuthUser } from '../auth/payloads/auth.payload';
 import { AutoConvertDto } from './dtos/autoconvert.dto';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Request} from 'express';
 
 @UseGuards(AccessTokenGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@ApiTags('autoconvert')
 @Controller('autoconvert')
 export class AutoconvertController {
-    constructor(private autoconvertService: AutoconvertService) {}
+    constructor(private autoconvertService: AutoconvertService){}
 
     @Get('')
-    @ApiOperation({ summary: 'Get autoconvert data' })
-    @ApiBearerAuth()
-    getAutoConvert(@User() user: AuthUser) {
-        return this.autoconvertService.getAutoConvert(user);
+    getAutoConvert(@Req() req: Request){
+        const authUser: AuthUser = {sub: req.user['sub']}
+        return this.autoconvertService.getAutoConvert(authUser)
     }
 
+
     @Post('')
-    @ApiOperation({ summary: 'Update autoconvert data' })
-    @ApiBearerAuth()
-    updateAutoconvert(@User() user: AuthUser, @Body() data: AutoConvertDto) {
-        return this.autoconvertService.updateAutoconvert(user, data);
+    updateAutoconvert(@Req() req: Request, @Body() data: AutoConvertDto){
+        const authUser: AuthUser = {sub: req.user['sub']}
+        return this.autoconvertService.updateAutoconvert(authUser,data)
     }
 }

@@ -1,6 +1,8 @@
+
+
 export enum FeeSource {
     OSMO = 'OSMO',
     NETWORK = 'NETWORK',
-    RIDIVI = 'RIDIVI',
+    SOLFIN = 'SOLFIN',
     ONVO = 'ONVO',
 }
