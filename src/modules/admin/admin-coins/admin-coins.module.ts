@@ -6,8 +6,13 @@ import { Coin } from 'src/entities/coin.entity';
 import { IbexModule } from 'src/modules/ibex/ibex.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Coin]), IbexModule],
-    providers: [AdminCoinsService],
-    controllers: [AdminCoinsController],
+  imports: [
+    TypeOrmModule.forFeature([
+      Coin
+    ]),
+    IbexModule
+  ],
+  providers: [AdminCoinsService],
+  controllers: [AdminCoinsController]
 })
 export class AdminCoinsModule {}

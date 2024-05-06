@@ -1,3 +1,4 @@
+
 export enum FeatureEnum {
     REFERRAL = 'REFERRAL',
     RECURRENT_BUY = 'RECURRENT_BUY',
@@ -10,5 +11,5 @@ export enum FeatureEnum {
     SEND_ON_CHAIN = 'SEND_ON_CHAIN',
     SEND_GLOBALLY = 'SEND_GLOBALLY',
     AUTOCONVERT_TO_SEND = 'AUTOCONVERT_TO_SEND',
-    WITHDRAW = 'WITHDRAW',
+    WITHDRAW = 'WITHDRAW'
 }

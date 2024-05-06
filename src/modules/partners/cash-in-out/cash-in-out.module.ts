@@ -11,9 +11,21 @@ import { CashInOutController } from './cash-in-out.controller';
 import { CashInOutService } from './cash-in-out.service';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([User, FundingMethod, WithdrawalMethod, Otp]), FundingModule, WithdrawModule, UsersModule],
-    controllers: [CashInOutController],
-    providers: [CashInOutService],
-    exports: [CashInOutService],
+  imports: [
+    TypeOrmModule.forFeature([
+      User,
+      FundingMethod,
+      WithdrawalMethod,
+      Otp,
+    ]),
+    FundingModule,
+    WithdrawModule, 
+    UsersModule,
+  ],
+  controllers: [CashInOutController],
+  providers: [
+    CashInOutService,
+  ],
+  exports: [CashInOutService]
 })
 export class CashInOutModule {}

@@ -1,5 +1,5 @@
 export class AuthUser {
-    sub!: string;
+  sub: string;
 }
 
 export class PartnerRefreshTokenPayLoad {}

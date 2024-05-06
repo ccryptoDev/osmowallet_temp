@@ -1,47 +1,67 @@
-import { ClassSerializerInterceptor, Controller, Get, NotFoundException, Post, UseGuards, UseInterceptors } from '@nestjs/common';
-import { User } from 'src/common/decorators/user.decorator';
+import { Controller,ClassSerializerInterceptor,UseGuards,UseInterceptors,Post,Get, Req } from '@nestjs/common';
 import { AccessTokenGuard } from 'src/modules/auth/guards/accessToken.guard';
-import { AuthUser } from '../auth/payloads/auth.payload';
-import { UsersService } from '../users/users.service';
 import { CoinsService } from './coins.service';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { UsersService } from '../users/users.service';
+import { Request } from 'express';
 
-@ApiTags('coins')
 @Controller('coins')
 export class CoinsController {
     constructor(
         private coinService: CoinsService,
-        private userService: UsersService,
-    ) {}
+        private userService: UsersService
+    ){}
 
-    @ApiBearerAuth()
-    @ApiOperation({ summary: 'Get coins by country' })
+    // @UseGuards(AccessTokenGuard)
+    // @Get('/historic-btc-price')
+    // getHistoricBtcPrice(@Query() data: GetHistoricBtcPriceDto) {
+    //     switch(data.period){
+    //         case(GetHistoricBtcPriceType.DAILY):
+    //         return this.coinService.getDailyHistoricBtcPrice()
+    //         case(GetHistoricBtcPriceType.WEEKLY):
+    //         return this.coinService.getWeeklyHistoricBtcPrice()
+    //         case(GetHistoricBtcPriceType.MONTHLY):
+    //         return this.coinService.getMonthlyHistoricBtcPrice()
+    //         case(GetHistoricBtcPriceType.YEARLY):
+    //         return this.coinService.getYearlyHistoricBtcPrice()
+    //     }
+        
+    // }
+
+    // @Post('/historic-btc-price')
+    // updateHistoricBtcPrice(@Body() data: UpdateHistoricBtcPriceDto){
+    //     switch(data.type){
+    //         case(UpdateHistoricBtcPriceType.FIVE_MINUTES):
+    //         return this.coinService.updateFiveMinutesHistoricBtcPrice();
+    //         case(UpdateHistoricBtcPriceType.HOURLY):
+    //         return this.coinService.updateHourlyHistoricBtcPrice();
+    //         case(UpdateHistoricBtcPriceType.DAILY):
+    //         return this.coinService.updateDailyHistoricBtcPrice();
+    //     }
+    // }
+
     @UseGuards(AccessTokenGuard)
     @Get('/country')
-    async getCoinsByCountry(@User() authUser: AuthUser) {
-        const user = await this.userService.getUserById(authUser.sub);
-        if (!user) throw new NotFoundException('User not found');
-        return this.coinService.getCoinsByResidence(user.residence);
+    async getCoinsByCountry(@Req() req: Request){
+        
+        const user = await this.userService.getUserById(req.user['sub'])
+        return this.coinService.getCoinsByResidence(user.residence)
     }
 
-    @ApiOperation({ summary: 'Update exchange rates' })
     @Post('/updateRates')
-    updateRates() {
-        return this.coinService.updateExchangesRates();
+    updateRates(){
+        return this.coinService.updateExchangesRates()
     }
 
-    @ApiOperation({ summary: 'Get all coins' })
+    //@UseGuards(AccessTokenGuard)
     @UseInterceptors(ClassSerializerInterceptor)
     @Get()
-    async getCoins() {
-        return this.coinService.getAll();
+    async getCoins(){
+        return this.coinService.getAll()
     }
 
-    @ApiBearerAuth()
-    @ApiOperation({ summary: 'Get BTC price' })
     @UseGuards(AccessTokenGuard)
     @Get('/btc-price')
-    async getBtcPrice() {
-        return this.coinService.getBtcPrice();
+    async getBtcPrice(){
+        return this.coinService.getBtcPrice()
     }
 }

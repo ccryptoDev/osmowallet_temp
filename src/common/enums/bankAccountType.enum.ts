@@ -1,4 +1,6 @@
+
+
 export enum BankAccountType {
     AHORROS = 'AHORROS',
-    CORRIENTE = 'CORRIENTE',
+    CORRIENTE = 'CORRIENTE'
 }

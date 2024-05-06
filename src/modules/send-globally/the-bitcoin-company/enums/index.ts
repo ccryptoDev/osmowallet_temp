@@ -1,2 +1,2 @@
-export * from './currencies.enum';
-export * from './payout-options.enum';
+export * from './currencies.enum'
+export * from './payout-options.enum'

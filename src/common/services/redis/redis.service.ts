@@ -8,15 +8,15 @@ export class RedisService {
     constructor() {
         this.client = new Redis({
             host: process.env.REDIS_HOST,
-            port: Number(process.env.REDIS_PORT),
+            port: Number(process.env.REDIS_PORT), 
         });
     }
 
-    async getKeyValue(key: string): Promise<string | null> {
-        return this.client.get(key);
+    async getKeyValue(key: string): Promise<string> {
+        return  await  this.client.get(key);
     }
 
-    async setKeyValue(key: string, value: string): Promise<void> {
+    async setKeyValue(key: string, value: string): Promise<void> {    
         await this.client.set(key, value);
     }
 

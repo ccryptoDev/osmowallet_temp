@@ -13,18 +13,23 @@ import { Setting } from 'src/entities/setting.entity';
 import { WalletHistory } from 'src/entities/walletHistory.entity';
 import { GoogleCloudTasksService } from 'src/services/google-cloud-tasks/google-cloud-tasks.service';
 import { PartnersModule } from 'src/modules/partners/partners.module';
-import { PushNotificationModule } from 'src/modules/push-notification/push-notification.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([TransactionGroup, Transaction, User, Coin, Setting, WalletHistory]),
-        IbexModule,
-        ReferralModule,
-        PartnersModule,
-        PushNotificationModule,
-    ],
-    controllers: [AdminTransactionsController],
-    providers: [AdminTransactionsService, SendGridService, GoogleCloudTasksService],
-    exports: [AdminTransactionsService],
+  imports: [
+    TypeOrmModule.forFeature([
+      TransactionGroup,
+      Transaction,
+      User,
+      Coin,
+      Setting,
+      WalletHistory
+    ]),
+    IbexModule,
+    ReferralModule,
+    PartnersModule
+  ],
+  controllers: [AdminTransactionsController],
+  providers: [AdminTransactionsService,SendGridService, GoogleCloudTasksService],
+  exports: [AdminTransactionsService],
 })
 export class AdminTransactionsModule {}

@@ -1,12 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString } from "class-validator";
 
 export class SinpeMovilWithdrawDto {
-    @ApiProperty({
-        description: 'The phone number to withdraw to',
-        example: '88888851',
-    })
     @IsString()
     @IsNotEmpty()
-    phoneNumber!: string;
+    phoneNumberTo: string;
+
+    @IsEmail()
+    emailTo: string;
+
+    @IsString()
+    description: string;
 }

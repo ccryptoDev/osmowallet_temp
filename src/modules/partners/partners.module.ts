@@ -21,19 +21,36 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { PartnerInvoice, PartnerInvoiceSchema } from 'src/schemas/partnerInvoice.schema';
 import { GoogleCloudTasksService } from 'src/services/google-cloud-tasks/google-cloud-tasks.service';
 import { CashInOutModule } from './cash-in-out/cash-in-out.module';
-import { ConfigModule } from '@nestjs/config';
 
 @Module({
-    imports: [
-        ConfigModule,
-        MongooseModule.forFeature([{ name: PartnerInvoice.name, schema: PartnerInvoiceSchema }]),
-        TypeOrmModule.forFeature([User, Bank, IbexAccount, PartnerConfig, App, PartnerToken, TierFeature, Feature, Coin]),
-        IbexModule,
-        CoinsModule,
-        CashInOutModule,
-    ],
-    controllers: [PartnersController],
-    providers: [PartnersService, GoogleCloudTasksService, SendGridService, SmsService, EncrypterHelper, JwtService],
-    exports: [PartnersService],
+  imports: [
+    MongooseModule.forFeature([
+      {name: PartnerInvoice.name, schema: PartnerInvoiceSchema}
+    ]),
+    TypeOrmModule.forFeature([
+      User,
+      Bank,
+      IbexAccount,
+      PartnerConfig,
+      App,
+      PartnerToken,
+      TierFeature,
+      Feature,
+      Coin,
+    ]),
+    IbexModule,
+    CoinsModule,
+    CashInOutModule,
+  ],
+  controllers: [PartnersController],
+  providers: [
+    PartnersService,
+    GoogleCloudTasksService,
+    SendGridService,
+    SmsService,
+    EncrypterHelper,
+    JwtService,
+  ],
+  exports: [PartnersService]
 })
 export class PartnersModule {}

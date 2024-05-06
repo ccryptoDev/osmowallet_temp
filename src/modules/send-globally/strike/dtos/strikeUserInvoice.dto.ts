@@ -1,13 +1,10 @@
-import { IsString } from 'class-validator';
-import { StrikeInvoiceDto } from './invoice.dto';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsNumber, IsOptional, IsString } from "class-validator"
+import { StrikeInvoiceDto } from "./invoice.dto"
 
-export class CreateStrikeUserInvoiceDto extends StrikeInvoiceDto {
-    @ApiProperty({
-        description: 'The username of the user',
-        example: 'john_doe',
-    })
+
+export class CreateStrikeUserInvoiceDto extends StrikeInvoiceDto{
+
     @IsString()
-    @ApiProperty()
-    username!: string;
+    username: string
+
 }

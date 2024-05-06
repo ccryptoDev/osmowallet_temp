@@ -1,19 +1,12 @@
-import { IsISO31661Alpha2, IsString } from 'class-validator';
-import { AuthDto } from './auth.dto';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsISO31661Alpha2, IsString } from "class-validator";
+import { AuthDto } from "./auth.dto";
 
-export class CreateUsaUserDto extends AuthDto {
-    @ApiProperty({
-        description: 'The input value',
-        example: 'example input',
-    })
+
+
+export class CreateUsaUserDto extends AuthDto{
     @IsString()
-    input!: string;
+    input: string
 
-    @ApiProperty({
-        description: 'The country code',
-        example: 'US',
-    })
     @IsISO31661Alpha2()
-    country!: string;
+    country: string
 }

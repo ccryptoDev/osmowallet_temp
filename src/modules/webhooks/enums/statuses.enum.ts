@@ -1,13 +1,15 @@
-export enum IbexStatuses {
+
+
+export enum IbexStatuses{
     IN_FLIGHT = 'IN_FLIGHT',
     SUCCEEDED = 'SUCCEEDED',
-    FAILED = 'FAILED',
+    FAILED = 'FAILED'
 }
 
 export enum OnChainStatuses {
     INITIATED = 'INITIATED',
-    MEMPOOL = 'MEMPOOL',
+    MEMPOOL = "MEMPOOL",
     BLOCKCHAIN = 'BLOCKCHAIN',
     CONFIRMED = 'CONFIRMED',
-    FAILED = 'FAILED',
+    FAILED = 'FAILED'
 }

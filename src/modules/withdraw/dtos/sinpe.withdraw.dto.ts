@@ -1,11 +1,25 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsEmail, IsIBAN } from "class-validator";
+
+
+import { IsString } from "class-validator";
 
 export class SinpeWithdrawDto {
-    @ApiProperty({
-        description: 'The IBAN of the recipient',
-        example: 'CR1234567890123456789',
-    })
+
+    @IsIBAN()
+    ibanTo: string
+
     @IsString()
-    iban!: string;
+    nameTo: string
+
+    @IsEmail()
+    emailTo: string
+
+    @IsString()
+    documentTo: string
+
+    @IsString()
+    documentTypeTo: string
+
+    @IsString()
+    description: string = ''
 }

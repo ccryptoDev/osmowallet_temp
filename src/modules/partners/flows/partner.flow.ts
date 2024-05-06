@@ -1,17 +1,19 @@
-import { PartnerStatus } from '../enums/partnerEvent.enum';
+import { PartnerStatus } from "../enums/partnerEvent.enum"
+
 
 export class PartnerFlowContext {
-    private strategy: PartnerFlowStrategy;
+    private strategy: PartnerFlowStrategy
 
-    constructor(strategy: PartnerFlowStrategy) {
-        this.strategy = strategy;
+    constructor(strategy: PartnerFlowStrategy){
+        this.strategy = strategy
     }
-
-    async execute(): Promise<PartnerStatus> {
-        return this.strategy.deposit();
+    
+    async execute() : Promise<PartnerStatus> {
+        return this.strategy.deposit()
     }
 }
 
 export interface PartnerFlowStrategy {
-    deposit(): Promise<PartnerStatus>;
+
+    deposit() : Promise<PartnerStatus>
 }

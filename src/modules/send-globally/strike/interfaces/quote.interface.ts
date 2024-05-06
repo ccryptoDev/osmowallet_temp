@@ -1,3 +1,6 @@
+
+
+
 export interface StrikeQuote {
     quoteId: string;
     description: string;

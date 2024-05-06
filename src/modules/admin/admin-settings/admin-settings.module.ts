@@ -3,7 +3,9 @@ import { SettingsModule } from 'src/modules/settings/settings.module';
 import { AdminSettingsController } from './admin-settings.controller';
 
 @Module({
-    imports: [SettingsModule],
+    imports: [
+        SettingsModule
+    ],
     controllers: [AdminSettingsController],
 })
 export class AdminSettingsModule {}

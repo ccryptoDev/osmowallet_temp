@@ -1,3 +1,6 @@
+
+
+
 export interface Funding {
-    fund(): Promise<void>;
+    fund(): Promise<void>
 }

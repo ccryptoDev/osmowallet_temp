@@ -6,8 +6,13 @@ import { Wallet } from 'src/entities/wallet.entity';
 import { IbexModule } from 'src/modules/ibex/ibex.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Wallet]), IbexModule],
-    controllers: [AdminDashboardController],
-    providers: [AdminDashboardService],
+  imports: [
+    TypeOrmModule.forFeature([
+      Wallet
+    ]),
+    IbexModule
+  ],
+  controllers: [AdminDashboardController],
+  providers: [AdminDashboardService],
 })
 export class AdminDashboardModule {}

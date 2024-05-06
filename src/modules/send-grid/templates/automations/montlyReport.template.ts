@@ -1,11 +1,14 @@
-import { EmailAttachmentStructure, EmailContentStructure, EmailToStructure, SendgridTemplate } from '../sendgridBase.template';
+
+
+import { EmailAttachmentStructure, EmailContentStructure, EmailFromStructure, EmailToStructure, SendgridTemplate } from "../sendgridBase.template";
 
 /*
     This class send email verification to the user extending of base class
  */
-export class MonthlyReportTemplate extends SendgridTemplate {
+export class MonthlyReportTemplate extends SendgridTemplate{
+
     /// The link is where the user will be redirected after click the button in the email
-    link: string = '';
+    link: string = ''
 
     /// This template in html format will be displayed in the email
     template: string = `
@@ -35,12 +38,15 @@ export class MonthlyReportTemplate extends SendgridTemplate {
                 </div>
                 </body>
                 </html>
-    `;
-    constructor(to: Array<EmailToStructure>, attachments?: Array<EmailAttachmentStructure>) {
-        super(to, attachments);
-        const emailContent = new EmailContentStructure();
-        this.subject = 'Monthly report';
-        emailContent.value = this.template;
-        this.content = [emailContent];
+    `
+    constructor(
+        to: Array<EmailToStructure>,
+        attachments?: Array<EmailAttachmentStructure>,
+        ){
+        super(to,attachments)
+        var emailContent = new EmailContentStructure()
+        this.subject = 'Monthly report'
+        emailContent.value = this.template
+        this.content = [emailContent]        
     }
 }

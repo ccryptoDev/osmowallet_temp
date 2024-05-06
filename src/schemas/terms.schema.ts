@@ -1,11 +1,14 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose"
+import mongoose from "mongoose"
 
-@Schema({ timestamps: true })
+@Schema({timestamps: true})
 export class Terms {
-    @Prop({ required: true })
-    country!: string;
-    @Prop({ required: true })
-    terms!: string;
+    @Prop({required: true})
+    country: String
+
+    @Prop({required: true})
+    terms: String
+
 }
 
 export const TermsSchema = SchemaFactory.createForClass(Terms);

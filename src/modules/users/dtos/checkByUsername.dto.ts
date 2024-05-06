@@ -1,11 +1,8 @@
-import { IsString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsString } from "class-validator";
 
-export class CheckUserByUsername {
-    @ApiProperty({
-        description: 'The username of the user',
-        example: 'john_doe',
-    })
+
+export class CheckUserByUsername{
+    
     @IsString()
-    username!: string;
+    username: string
 }

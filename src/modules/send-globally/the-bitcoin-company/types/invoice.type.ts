@@ -1,4 +1,4 @@
-import { Currencies, PayoutOptionEnum } from '../enums';
+import { Currencies, PayoutOptionEnum } from "../enums";
 
 export type Invoice = {
     id: string;

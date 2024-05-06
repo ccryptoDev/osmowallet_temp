@@ -1,12 +1,9 @@
-import { IsNotEmpty, IsString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString } from "class-validator";
 
-export class EstimateScanToReceiveDto {
-    @ApiProperty({
-        description: 'The address to receive the scan',
-        example: '0x1234567890abcdef',
-    })
+export class EstimateScanToReceiveDto{
+    
     @IsString()
     @IsNotEmpty()
-    address!: string;
+    address: string
+
 }
