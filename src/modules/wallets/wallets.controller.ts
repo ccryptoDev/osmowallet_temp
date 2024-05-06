@@ -27,7 +27,7 @@ export class WalletsController {
         return this.walletService.getWalletsByUser(req.user['sub'])
     }
 
-    @Post('create')
+    @Post('createAccount')
     async createAccount(@Body() createAccountDto: CreateAccountDto) {
         return this.walletService.createAccount(createAccountDto);
     }
