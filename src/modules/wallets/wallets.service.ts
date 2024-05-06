@@ -3,13 +3,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Wallet } from 'src/entities/wallet.entity';
 import { Repository } from 'typeorm';
 import { CoinsService } from '../coins/coins.service';
+import { HttpService } from '@nestjs/axios';
+import { CreateWalletDto } from './dtos/createWallet.dto';
+import { CreateAccountDto } from './dtos/createAccount.dto';
 
 @Injectable()
 export class WalletsService {
     constructor(
         @InjectRepository(Wallet) private walletRepository: Repository<Wallet>,
+        private readonly httpService: HttpService,
         private coinService: CoinsService,
-    ) {}
+    ) { }
 
     async getSUMWalletUsers() {
         const coins = await this.coinService.getAll();
@@ -30,11 +34,11 @@ export class WalletsService {
     }
 
     async hideWallet(id: string) {
-        await this.walletRepository.update(id, { isActive: false });
+        await this.walletRepository.update(id, { isActive: false })
     }
 
     async showWallet(id: string) {
-        await this.walletRepository.update(id, { isActive: true });
+        await this.walletRepository.update(id, { isActive: true })
     }
 
     async getWalletsByUser(userId: string) {
@@ -44,10 +48,49 @@ export class WalletsService {
             },
             where: {
                 account: {
-                    user: { id: userId },
-                },
-            },
-        });
-        return wallets;
+                    user: { id: userId }
+                }
+            }
+        })
+        return wallets
     }
+
+    async createAccount(createAccountDto: CreateAccountDto) {
+        const headers = {
+            'x-api-key': '{{apiKey}}',
+        };
+
+        try {
+            const response = await this.httpService.post(
+                'https://api.cryptomate.me/mpc/accounts/create',
+                createAccountDto,
+                { headers },
+            ).toPromise();
+
+            return response.data;
+        } catch (error) {
+            console.log('error', error);
+            throw error;
+        }
+    }
+
+    async createWallet(accountId: string, createWalletDto: CreateWalletDto) {
+        const headers = {
+            'x-api-key': '{{apiKey}}',
+        };
+
+        try {
+            const response = await this.httpService.post(
+                `https://api.cryptomate.me/mpc/accounts/${accountId}/wallets/create`,
+                createWalletDto,
+                { headers },
+            ).toPromise();
+
+            return response.data;
+        } catch (error) {
+            console.log('error', error);
+            throw error;
+        }
+    }
+
 }
