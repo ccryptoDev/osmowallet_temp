@@ -7,11 +7,15 @@ import { HttpService } from '@nestjs/axios';
 import { CreateWalletDto } from './dtos/createWallet.dto';
 import { CreateAccountDto } from './dtos/createAccount.dto';
 
+import { config as dotenvConfig } from 'dotenv';
+
+dotenvConfig({ path: '.env.development' });
+
 @Injectable()
 export class WalletsService {
     constructor(
         @InjectRepository(Wallet) private walletRepository: Repository<Wallet>,
-        private readonly httpService: HttpService,
+        private httpService: HttpService,
         private coinService: CoinsService,
     ) { }
 
@@ -56,7 +60,7 @@ export class WalletsService {
 
     async createAccount(createAccountDto: CreateAccountDto) {
         const headers = {
-            'x-api-key': '{{apiKey}}',
+            'x-api-key': process.env.OSMO_MONEY_API_KEY
         };
 
         try {
@@ -64,9 +68,9 @@ export class WalletsService {
                 'https://api.cryptomate.me/mpc/accounts/create',
                 createAccountDto,
                 { headers },
-            ).toPromise();
+            ).subscribe();
 
-            return response.data;
+            return response;
         } catch (error) {
             console.log('error', error);
             throw error;
@@ -83,9 +87,9 @@ export class WalletsService {
                 `https://api.cryptomate.me/mpc/accounts/${accountId}/wallets/create`,
                 createWalletDto,
                 { headers },
-            ).toPromise();
+            ).subscribe();
 
-            return response.data;
+            return response;
         } catch (error) {
             console.log('error', error);
             throw error;

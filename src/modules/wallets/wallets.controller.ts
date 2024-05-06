@@ -7,7 +7,7 @@ import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { CreateAccountDto } from './dtos/createAccount.dto';
 import { CreateWalletDto } from './dtos/createWallet.dto';
 
-@UseGuards(AccessTokenGuard)
+// @UseGuards(AccessTokenGuard)
 @Controller('wallets')
 export class WalletsController {
     constructor(private walletService: WalletsService) { }
@@ -27,12 +27,12 @@ export class WalletsController {
         return this.walletService.getWalletsByUser(req.user['sub'])
     }
 
-    @Post('createAccount')
+    @Post('/createAccount')
     async createAccount(@Body() createAccountDto: CreateAccountDto) {
         return this.walletService.createAccount(createAccountDto);
     }
 
-    @Post(':accountId/wallets/create')
+    @Post('/:accountId/wallets/create')
     async createWallet(
         @Param('accountId') accountId: string,
         @Body() createWalletDto: CreateWalletDto,
