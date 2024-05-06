@@ -52,7 +52,7 @@ export class CashInOutService {
 
         const otpRecord = this.otpRepository.create({
             user: user,
-            otp: otp,
+            otp: Number(otp),
             expiry: expiry,
             type: OTP.TRANSACTION,
         });

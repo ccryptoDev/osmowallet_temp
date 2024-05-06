@@ -228,13 +228,13 @@ export class AuthService {
       expiry.setMinutes(expiry.getMinutes() + 15);
       if (otpRecord) {
         await this.otpRepository.update(otpRecord.id, {
-          otp: otp,
+          otp: Number(otp),
           expiry: expiry,
         });
       } else {
         otpRecord = this.otpRepository.create({
           user: user,
-          otp: otp,
+          otp: Number(otp),
           expiry: expiry,
           type: OTP.VERIFICATION,
         });
@@ -255,7 +255,7 @@ export class AuthService {
       const otpRecord = await this.otpRepository.findOne({
         where: {
           user: { id: authUser.sub },
-          otp: otp,
+          otp: Number(otp),
           type: OTP.VERIFICATION,
           expiry: MoreThan(expiry),
         },
@@ -325,13 +325,13 @@ export class AuthService {
     expiry.setMinutes(expiry.getMinutes() + 15);
     if (otpRecord) {
       await this.otpRepository.update(otpRecord.id, {
-        otp: otp,
+        otp: Number(otp),
         expiry: expiry,
       });
     } else {
       otpRecord = this.otpRepository.create({
         input: data.input,
-        otp: otp,
+        otp: Number(otp),
         expiry: expiry,
         type: OTP.VERIFICATION,
       });
@@ -372,13 +372,13 @@ export class AuthService {
       expiry.setMinutes(expiry.getMinutes() + 15);
       if (otpRecord) {
         await this.otpRepository.update(otpRecord.id, {
-          otp: otp,
+          otp: Number(otp),
           expiry: expiry,
         });
       } else {
         otpRecord = this.otpRepository.create({
           user: user,
-          otp: otp,
+          otp: Number(otp),
           expiry: expiry,
           type: otpType,
         });
@@ -666,13 +666,13 @@ export class AuthService {
       expiry.setMinutes(expiry.getMinutes() + 15);
       if (otpRecord) {
         await this.otpRepository.update(otpRecord.id, {
-          otp: otp,
+          otp: Number(otp),
           expiry: expiry,
         });
       } else {
         otpRecord = this.otpRepository.create({
           user: user,
-          otp: otp,
+          otp: Number(otp),
           expiry: expiry,
           type: OTP.AUTH,
         });
