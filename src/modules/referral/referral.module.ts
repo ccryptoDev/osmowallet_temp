@@ -20,36 +20,19 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { App } from 'src/entities/app.entity';
 import { GoogleCloudTasksService } from 'src/services/google-cloud-tasks/google-cloud-tasks.service';
 import { PushNotificationModule } from '../push-notification/push-notification.module';
+import { FeaturesModule } from '../features/features.module';
 
 @Module({
-  imports:[
-    MongooseModule.forFeature([
-      {name: PartnerInvoice.name, schema: PartnerInvoiceSchema}
-    ]),
-    TypeOrmModule.forFeature([
-      App,
-      Transaction,
-      Referral,
-      User,
-      Wallet,
-      TransactionGroup,
-      PartnerInvoice,
-      Setting,
-      Coin,
-      IbexAccount,
-    ]),
-    IbexModule,
-    PushNotificationModule,
-    PartnersModule
-  ],
-  controllers: [ReferralController],
-  providers: [
-    ReferralService,
-    SmsService,
-    SendGridService,
-    MyLogger,
-    GoogleCloudTasksService
-  ],
-  exports: [ReferralService]
+    imports: [
+        MongooseModule.forFeature([{ name: PartnerInvoice.name, schema: PartnerInvoiceSchema }]),
+        TypeOrmModule.forFeature([App, Transaction, Referral, User, Wallet, TransactionGroup, PartnerInvoice, Setting, Coin, IbexAccount]),
+        IbexModule,
+        PushNotificationModule,
+        PartnersModule,
+        FeaturesModule
+    ],
+    controllers: [ReferralController],
+    providers: [ReferralService, SmsService, SendGridService, MyLogger, GoogleCloudTasksService],
+    exports: [ReferralService],
 })
 export class ReferralModule {}

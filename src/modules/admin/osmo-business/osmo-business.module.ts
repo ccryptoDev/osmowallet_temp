@@ -6,12 +6,8 @@ import { OsmoBusinessBpt } from 'src/entities/osmoBusinessBPT.entity';
 import { GoogleCloudStorageService } from 'src/services/google-cloud-storage/google-cloud-storage.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      OsmoBusinessBpt
-    ])
-  ],
-  controllers: [OsmoBusinessController],
-  providers: [OsmoBusinessService,GoogleCloudStorageService]
+    imports: [TypeOrmModule.forFeature([OsmoBusinessBpt])],
+    controllers: [OsmoBusinessController],
+    providers: [OsmoBusinessService, GoogleCloudStorageService],
 })
 export class OsmoBusinessModule {}

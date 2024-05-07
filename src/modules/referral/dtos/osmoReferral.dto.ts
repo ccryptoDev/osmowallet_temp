@@ -1,9 +1,11 @@
-import { IsMobileValid } from "src/common/dto_validators/mobile.validator";
-
-
+import { ApiProperty } from '@nestjs/swagger';
+import { IsMobileValid } from 'src/common/dto_validators/mobile.validator';
 
 export class OsmoReferralDto {
-    
-    @IsMobileValid({message: 'Este no es un número de teléfono válido'})
-    phoneNumber: string
+    @ApiProperty({
+        description: 'The phone number',
+        example: '1234567890',
+    })
+    @IsMobileValid({ message: 'Este no es un número de teléfono válido' })
+    phoneNumber!: string;
 }

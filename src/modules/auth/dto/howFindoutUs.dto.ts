@@ -5,12 +5,12 @@ import { AuthDto } from "./auth.dto"
 export class HowFindoutUsDto extends AuthDto {
   @IsEmail()
   @ValidateIf(o => o.mobile == undefined)
-  email: string
+  email!: string
 
   @ValidateIf(o => o.email == undefined)
-  mobile: string
+  mobile!: string
 
   @IsArray()
-  referralSourceIds: string[]
+  referralSourceIds!: string[]
 
 }

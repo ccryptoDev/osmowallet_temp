@@ -1,56 +1,58 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import axios from 'axios';
-import * as Sentry from '@sentry/node';
-import { RelampagoQuoteDto } from './dtos/quote.dto';
-import * as crypto from 'crypto';
-import { RelampagoQuoteResponse } from './interface/quoteReponse';
 import { InjectRepository } from '@nestjs/typeorm';
+import axios, { AxiosError } from 'axios';
+import * as crypto from 'crypto';
 import { GlobalPayment } from 'src/entities/globalPayment.entity';
 import { Repository } from 'typeorm';
 import { SendGloballyPartner } from '../enums/partner.enum';
 import { SendGloballyStatus } from '../enums/status.enum';
+import { RelampagoQuoteDto } from './dtos/quote.dto';
 import { UpdateRelampagoInvoiceDto } from './dtos/updateStatus.dto';
-import { RelampagoCurrency } from './enums/currency.enum';
 import { RelampagoCountry } from './enums/countries.enum';
+import { RelampagoCurrency } from './enums/currency.enum';
+import { RelampagoQuoteResponse } from './interface/quoteReponse';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class RelampagoService {
-    private baseURL = process.env.RELAMPAGO_URL
+    private baseURL = process.env.RELAMPAGO_URL;
     constructor(
-        @InjectRepository(GlobalPayment) private globalPaymentRepository: Repository<GlobalPayment>
-    ){}
+        private configService: ConfigService,
+        @InjectRepository(GlobalPayment) private globalPaymentRepository: Repository<GlobalPayment>,
+    ) {}
 
     private getAuthorizationToken(method: string, path: string, jsonBody?: any) {
         const nonce = Date.now().toString();
 
-        let content = `${method} ${path} `
-        if(jsonBody != undefined) {
-            content += JSON.stringify(jsonBody)
+        let content = `${method} ${path} `;
+        if (jsonBody != undefined) {
+            content += JSON.stringify(jsonBody);
         }
-        const hmac = crypto.createHmac('sha256', process.env.RELAMPAGO_API_KEY);
+        const relampagoApiKey = this.configService.getOrThrow<string>('RELAMPAGO_API_KEY');
+        const hmac = crypto.createHmac('sha256', relampagoApiKey);
 
         const signatureHash = hmac.update(content).digest('base64');
-        const token = `${process.env.RELAMPAGO_API_KEY_ID} ${nonce} ${signatureHash}`
-        return token
+        const token = `${process.env.RELAMPAGO_API_KEY_ID} ${nonce} ${signatureHash}`;
+        return token;
     }
 
-    async getQuote(body: any) : Promise<RelampagoQuoteResponse>{
-        try{
-            const token = this.getAuthorizationToken('POST','/quote',body)
+    async getQuote(body: any): Promise<RelampagoQuoteResponse> {
+        try {
+            const token = this.getAuthorizationToken('POST', '/quote', body);
             const config = {
                 baseURL: this.baseURL,
                 url: '/quote',
                 method: 'POST',
                 headers: {
-                    'Authorization': token
+                    Authorization: token,
                 },
-                data: body
-            }
-            const response = await axios(config)
-            return response.data
-        }catch(error){
-            if (error.response) {
-                throw new BadRequestException(error.response.data);
+                data: body,
+            };
+            const response = await axios(config);
+            return response.data;
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                throw new BadRequestException(error?.response?.data);
             } else {
                 throw new BadRequestException(error);
             }
@@ -58,21 +60,21 @@ export class RelampagoService {
     }
 
     async getBanks(countryCode: RelampagoCountry) {
-        try{
-            const token = this.getAuthorizationToken('GET','/banks')
+        try {
+            const token = this.getAuthorizationToken('GET', '/banks');
             const config = {
                 baseURL: this.baseURL,
                 url: `/banks?countryCode=${countryCode}`,
                 method: 'GET',
                 headers: {
-                    'Authorization': token
-                }
-            }
-            const response = await axios(config)
-            return response.data.banks
-        }catch(error){
-            if (error.response) {
-                throw new BadRequestException(error.response.data);
+                    Authorization: token,
+                },
+            };
+            const response = await axios(config);
+            return response.data.banks;
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                throw new BadRequestException(error?.response?.data);
             } else {
                 throw new BadRequestException(error);
             }
@@ -82,10 +84,10 @@ export class RelampagoService {
     async generateInvoice(body: RelampagoQuoteDto) {
         const data = {
             satoshis: body.satoshis,
-            recipientInfo: body.recipientInfo
-        }
+            recipientInfo: body.recipientInfo,
+        };
         // if(body.countryCode == RelampagoCountry.MX) {
-            
+
         // }
         // if(body.countryCode == RelampagoCountry.ARG){
         //     data = {
@@ -95,7 +97,7 @@ export class RelampagoService {
         //         recipientInfo:  body.recipientInfo,
         //     }
         // }
-        const quote = await this.getQuote(data)
+        const quote = await this.getQuote(data);
         const globalPayment = this.globalPaymentRepository.create({
             amount: quote.recipientAmount.amount,
             quoteId: quote.quoteId,
@@ -104,29 +106,27 @@ export class RelampagoService {
             sats: body.satoshis,
             status: SendGloballyStatus.PENDING,
             address: quote.lnInvoice,
-            flow: 'USER'
-        })
-        await this.globalPaymentRepository.insert(globalPayment)
-        return quote
+            flow: 'USER',
+        });
+        await this.globalPaymentRepository.insert(globalPayment);
+        return quote;
     }
 
     async manageEvent(body: UpdateRelampagoInvoiceDto) {
-        let status: SendGloballyStatus =  SendGloballyStatus.PAID
-        if(body.event == 'FAILURE'){
-            status = SendGloballyStatus.FAILED
+        let status: SendGloballyStatus = SendGloballyStatus.PAID;
+        if (body.event == 'FAILURE') {
+            status = SendGloballyStatus.FAILED;
         }
         const globalPayment = await this.globalPaymentRepository.findOne({
             where: {
                 quoteId: body.txId,
-            }
-        })
+            },
+        });
 
-        if(!globalPayment) return
-        
+        if (!globalPayment) return;
+
         await this.globalPaymentRepository.update(globalPayment.id, {
-            status: status
-        })
+            status: status,
+        });
     }
-
-    
 }

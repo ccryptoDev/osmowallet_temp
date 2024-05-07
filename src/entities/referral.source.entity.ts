@@ -1,11 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToMany } from 'typeorm';
-import { UserReferralSource } from './user.referral.source.entity';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({name: 'referral_source'})
 export class ReferralSource {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  source_name: string;
+  source_name!: string;
 }

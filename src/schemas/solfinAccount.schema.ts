@@ -1,29 +1,27 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { HydratedDocument, Types } from "mongoose";
-export type SolfinDocument = HydratedDocument<SolfinAccount>;
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument } from 'mongoose';
+export type SolfinDocument = HydratedDocument<RidiviAccount>;
 
 @Schema()
-export class SolfinIbanAccount {
-    @Prop({required: true})
-    iban: string
+export class RidiviIbanAccount {
+    @Prop({ required: true })
+    iban!: string;
 
-    @Prop({required: true})
-    currency: string
-
+    @Prop({ required: true })
+    currency!: string;
 }
-export const SolfinIbanAccountSchema = SchemaFactory.createForClass(SolfinIbanAccount);
+export const RidiviIbanAccountSchema = SchemaFactory.createForClass(RidiviIbanAccount);
 
-@Schema({timestamps: true})
-export class SolfinAccount {
-    @Prop({required: true})
-    userId: string
+@Schema({ timestamps: true })
+export class RidiviAccount {
+    @Prop({ required: true })
+    userId!: string;
 
-    @Prop({required: true})
-    documentId: string
+    @Prop({ required: true })
+    documentId!: string;
 
-    @Prop({type: [SolfinIbanAccountSchema], required: false})
-    accounts: SolfinIbanAccount[]
+    @Prop({ type: [RidiviIbanAccountSchema], required: false })
+    accounts!: RidiviIbanAccount[];
 }
 
-
-export const SolfinAccountSchema = SchemaFactory.createForClass(SolfinAccount);
+export const RidiviAccountSchema = SchemaFactory.createForClass(RidiviAccount);
