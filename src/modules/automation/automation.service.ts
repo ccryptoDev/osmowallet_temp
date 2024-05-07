@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
+import Decimal from 'decimal.js';
+import { MainWalletsAccount } from 'src/common/enums/main-wallets.enum';
 import { Status } from 'src/common/enums/status.enum';
 import { TransactionSubtype } from 'src/common/enums/transactionSubtype.enum';
 import { MyLogger } from 'src/common/loggers/mylogger.logger';
@@ -18,7 +20,7 @@ import { GoogleCloudStorageService } from 'src/services/google-cloud-storage/goo
 import { SlackWebhooks } from 'src/services/slack/enums/slack-webhooks.enum';
 import { SlackService } from 'src/services/slack/slack.service';
 import { stillmanTemplate } from 'src/services/slack/templates/stillman.template';
-import { EntityManager, In, IsNull, LessThanOrEqual, Not, Repository } from 'typeorm';
+import { EntityManager, In, IsNull, LessThan, LessThanOrEqual, Not, Repository } from 'typeorm';
 import { TransactionsValidatedDto } from '../admin/admin-transactions/dtos/transactionsValidated.dto';
 import { IbexService } from '../ibex/ibex.service';
 import { CoinEnum } from '../me/enums/coin.enum';
@@ -27,7 +29,7 @@ import { StillmanService } from '../stillman/stillman.service';
 import { UsersService } from '../users/users.service';
 import { AccountingReportHelper, WalletBalance } from './converters/report.builder';
 import { TransactionChild, TransactionMigration } from './interfaces.ts/trans.interface';
-import Decimal from 'decimal.js';
+import { addDays } from 'date-fns';
 
 interface TransactionPayload {
     transactionCoin: Coin;
@@ -391,17 +393,55 @@ export class AutomationService {
         return;
     }
 
+    async updateWalletStatus() {
+        const dueDate = addDays(new Date(), -30);
+        const wallets = await this.walletRepository.find({
+            where: {
+                availableBalance: 0,
+                isActive: true,
+                coin: { acronym: CoinEnum.USDT },
+                updatedAt: LessThan(dueDate),
+            },
+        });
+
+        if (wallets) {
+            await this.walletRepository.update(
+                { availableBalance: 0, isActive: true, updatedAt: LessThan(dueDate), coin: { acronym: CoinEnum.USDT } },
+                { isActive: false },
+            );
+        }
+    }
+
     async stillmanInvoice(): Promise<void> {
-        const accountID = this.configService.getOrThrow<string>('IBEX_NATIVE_OSMO_ACCOUNT_ID');
-        // Error getting osmo account details
-        const ibexAccount = await this.ibexService.getAccountDetails(accountID);
+        // const accountID = this.configService.getOrThrow<string>('IBEX_NATIVE_OSMO_ACCOUNT_ID');
+
 
         const allStillmanParams = await this.StillmanParamsRepository.find();
         if (!allStillmanParams[0]) throw new BadRequestException('Stillman Params not found');
         const stillmanParams = allStillmanParams[0];
 
         const rate = await this.ibexService.getBtcExchangeRate();
-        const ibexBalance = ibexAccount.balance;
+        const ibexBalance = await this.walletRepository.findOne({
+
+            relations: {
+                coin: true,
+                account: true,
+            },
+
+            where: {
+                account: {
+                    alias: MainWalletsAccount.MAIN,
+                },
+                coin: {
+                    acronym: CoinEnum.SATS,
+                },
+
+            },
+        })
+        if (!ibexBalance) throw new BadRequestException('IBEX Balance not found');
+
+
+
 
         const walletAmount: number[] = [];
 
@@ -467,10 +507,26 @@ export class AutomationService {
 
         const requiredBalanceBtc = minUSDBalance / rate.rate;
 
+
+
+        const difMinBalance = requiredBalanceBtc * (stillmanParams.minRange / 100);
+        const difMaxBalance = requiredBalanceBtc * (stillmanParams.maxRange / 100);
+
+        const minRange = requiredBalanceBtc - difMinBalance;
+        const maxRange = requiredBalanceBtc + difMaxBalance;
+
+        
+
+
+
+
+
+
         // const stillmanAdress = stillmanParams?.stillmanAddress;
 
-        if (ibexBalance < requiredBalanceBtc) {
-            const amount = requiredBalanceBtc - ibexBalance;
+        if (ibexBalance.availableBalance < minRange) {
+            const amount = requiredBalanceBtc - ibexBalance.availableBalance;
+            
             // const address: number = parseInt(accountsID);
             // const params : WithdrawDto = {
             //   assetCode: 'OSMO',
@@ -482,32 +538,37 @@ export class AutomationService {
             await SlackService.stillmanTransaction({
                 baseURL: SlackWebhooks.STILLMAN_CHANNEL,
                 data: stillmanTemplate({
-                    amount: amount,
+                    requeredBalance: amount,
+                    treasuresAmount: ibexBalance.availableBalance,  
                     reservesAmount: requiredBalanceBtc,
                     callType: 'Buy',
                 }),
             });
         }
-        if (ibexBalance > requiredBalanceBtc) {
-            const amount = ibexBalance - requiredBalanceBtc;
+        else if (ibexBalance.availableBalance > maxRange) {
+            const amount = ibexBalance.availableBalance - requiredBalanceBtc;
             //const fee  = {feeSat: 0} ;
-            // const params : SendDto = {
-            //   amount: amount,
-            //   address: stillmanAdress,
-            //   coinId: 'OSMO',
-            //   feeSat: fee.feeSat,
+            //const params : SendDto = {
+            //  amount: amount,
+            //  address: stillmanAdress,
+            //  coinId: 'OSMO',
+            //  feeSat: fee.feeSat,
             // };
-            // const response = await this.ibexService.sendOnChain(accountsID, params);
-            // return response;
+            //const response = await this.ibexService.sendOnChain(accountsID, params);
+            //return response;
 
             await SlackService.stillmanTransaction({
                 baseURL: SlackWebhooks.STILLMAN_CHANNEL,
                 data: stillmanTemplate({
-                    amount: amount,
+                    requeredBalance: amount,
+                    treasuresAmount: ibexBalance.availableBalance,
                     reservesAmount: requiredBalanceBtc,
                     callType: 'Sell',
                 }),
             });
         }
     }
+
+
+
 }

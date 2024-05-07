@@ -223,6 +223,7 @@ export class SwapService {
     }
 
     async swap(authUser: AuthUser, data: SwapDto) {
+        await this.featureService.checkFeatureAvailability(authUser,FeatureEnum.SWAP)
         await this.transactionService.checkTransactionRateLimit(authUser.sub, TransactionType.SWAP);
         const fromCoin = await this.coinRepository.findOneBy({
             id: data.fromCoinId,
@@ -593,6 +594,7 @@ export class SwapService {
     }
 
     async createRecurrentBuy(authUser: AuthUser, data: RecurrentBuyDto) {
+        await this.featureService.checkFeatureAvailability(authUser,FeatureEnum.RECURRENT_BUY)
         try {
             const coin = await this.coinRepository.findOneBy({ id: data.coinId });
             if (!coin) throw new BadRequestException('Invalid coin');

@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { User } from 'src/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, MoreThan, Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { AuthToken } from 'src/entities/auth.token.entity';
 import { SignUpDto } from './dto/signup.dto';
 import { Account } from 'src/entities/account.entity';
@@ -65,6 +65,10 @@ import { UsersService } from '../users/users.service';
 import { KycService } from '../kyc/kyc.service';
 import { FundingTransactionLimit } from 'src/entities/fundingTransactionLimits.entity';
 import { FundingMethod } from 'src/entities/fundingMethod.entity';
+import { UserFeature } from 'src/entities/feat-user.entity';
+import { ReferralSource } from 'src/entities/referral.source.entity';
+import { UserReferralSource } from 'src/entities/user.referral.source.entity';
+import { HowFindoutUsDto } from './dto/howFindoutUs.dto';
 
 @Injectable()
 export class AuthService {
@@ -90,6 +94,8 @@ export class AuthService {
         @InjectRepository(Tier) private tierRepository: Repository<Tier>,
         @InjectRepository(TierUser) private tierUserRepository: Repository<TierUser>,
         @InjectRepository(FundingMethod) private fundingMethodRepository: Repository<FundingMethod>,
+        @InjectRepository(UserReferralSource) private userReferralSourceRepository: Repository<UserReferralSource>,
+        @InjectRepository(ReferralSource) private referralSourceRepository: Repository<ReferralSource>,
         @InjectModel(UsaUser.name) private usaUserModel: Model<UsaUser>,
         private ibexService: IbexService,
         private jwtService: JwtService,
@@ -229,8 +235,8 @@ export class AuthService {
                 });
                 await this.otpRepository.insert(otpRecord);
             }
-            this.smsService.sendSMS({
-                message: `Este es tu código: ${otp} de OsmoWallet`,
+            this.smsService.sendAuthMessage({
+                code: otp,
                 phoneNumber: user.mobile,
             });
         } catch (error) {
@@ -331,8 +337,8 @@ export class AuthService {
             const template = new OTPSigninTemplate([{ email: data.input, name: 'OsmoUser' }], otp);
             this.sengridService.sendMail(template);
         } else {
-            this.smsService.sendSMS({
-                message: `Este es tu código: ${otp} de OsmoWallet`,
+            this.smsService.sendAuthMessage({
+                code: otp,
                 phoneNumber: data.input,
             });
         }
@@ -454,9 +460,7 @@ export class AuthService {
         }
 
         const [features, role, period, tier, coins, fundingMethods] = await Promise.all([
-            this.featureRepository.find({
-                where: { name: In([FeatureEnum.FUNDING, FeatureEnum.WITHDRAW]) },
-            }),
+            this.featureRepository.find(),
             this.roleRepository.findOneBy({ name: 'User' }),
             this.periodRepository.findOneBy({ name: '5 minutes' }),
             this.tierRepository.findOneBy({ name: 'Standard' }),
@@ -527,6 +531,13 @@ export class AuthService {
                 };
             });
             await transactionalEntityManager.insert(FundingTransactionLimit, fundingTransactionLimits);
+
+            // User Feature
+            const userFeatures = features.map(feature => transactionalEntityManager.create(UserFeature,{
+                feature: feature,
+                user: newUser
+            }))
+            await transactionalEntityManager.insert(UserFeature,userFeatures)
         });
         if (!newUser) throw new BadRequestException('Invalid user');
 
@@ -537,6 +548,37 @@ export class AuthService {
         this.storeTokensForUser(newUser, tokens);
         this.kycService.createKycPartnerStatus(newUser.id);
         return tokens;
+    }
+
+    async howFindoutUs(howFindoutUsDto: HowFindoutUsDto): Promise<any> {
+        const app = await this.appRepository.findOneBy({
+            clientId: howFindoutUsDto.clientId,
+            clientSecret: howFindoutUsDto.clientSecret,
+        });
+        if (!app) throw new UnauthorizedException();
+        if (!app.name.toLowerCase().includes('osmo')) throw new UnauthorizedException();
+    
+        let userReferralSource = await this.userReferralSourceRepository.findOne({
+            where: [
+                { email:howFindoutUsDto.email },
+                { mobile:howFindoutUsDto.mobile },
+            ],
+        });
+        
+        if(!userReferralSource) {
+            userReferralSource = this.userReferralSourceRepository.create({
+                email: howFindoutUsDto.email,
+                mobile: howFindoutUsDto.mobile,
+                referralSources: howFindoutUsDto.referralSourceIds.join(",")
+            })
+        } else {
+            userReferralSource.referralSources = howFindoutUsDto.referralSourceIds.join(",")
+        }
+        
+        // Save the user referral source
+        await this.userReferralSourceRepository.save(userReferralSource);
+    
+        return userReferralSource;
     }
 
     private async createIbexAccount(user: User) {
@@ -610,8 +652,8 @@ export class AuthService {
                 const template = new OTPSigninTemplate([{ email: user.email, name: user.firstName ?? 'OsmoUser' }], otp);
                 this.sengridService.sendMail(template);
             } else {
-                this.smsService.sendSMS({
-                    message: `Este es tu código para tu autenticación en OsmoWallet: ${otp}`,
+                this.smsService.sendAuthMessage({
+                    code: otp,
                     phoneNumber: user.mobile,
                 });
             }

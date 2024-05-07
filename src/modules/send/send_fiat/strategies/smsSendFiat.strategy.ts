@@ -14,6 +14,7 @@ import { SmsService } from 'src/services/sms/sms.service';
 import { EntityManager } from 'typeorm';
 import { SendFiatDto } from '../../dtos/sendFiat.dto';
 import { SendFiat } from './interfaceSendFiat';
+import { WhatsappTemplate } from 'src/services/sms/templates/whatsapp.template';
 
 export class SmsSendFiat implements SendFiat {
     constructor(
@@ -67,8 +68,12 @@ export class SmsSendFiat implements SendFiat {
             await entityManager.save(userTransaction);
 
             //SEND SMS TO USER
-            const message = `Acabas de recibir ${this.data.amount} ${coin.acronym} de ${user.firstName}. Descarga OsmoWallet desde https://rebrand.ly/osmowallet y crea tu cuenta para obtenerlos.`;
-            this.smsService.sendSMS({ message: message, phoneNumber: mobile });
+            this.smsService.sendFiatInvitation({ 
+                phoneNumber: mobile,
+                amount: this.data.amount,
+                currency: coin.acronym,
+                from: user.firstName,
+            });
         });
         return true;
     }

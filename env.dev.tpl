@@ -100,6 +100,7 @@ KYC_TOKEN=op://OsmoWallet-DEV/Metamap/TOKEN
 TWILIO_ACCOUNT_SID=op://OsmoWallet General/Twilio/TWILIO_ACCOUNT_SID
 TWILIO_AUTH_TOKEN=op://OsmoWallet General/Twilio/TWILIO_AUTH_TOKEN
 TWILIO_PHONE=op://OsmoWallet General/Twilio/phone
+TWILIO_MESSAGING_SERVICE_ID=op://OsmoWallet General/Twilio/MESSAGING_SERVICE_ID
 
 MONGO_URL_CONNECTION=op://OsmoWallet-DEV/MongoDB/MONGO_URL_CONNECTION
 MONGO_DB_NAME=op://OsmoWallet-DEV/MongoDB/MONGO_DB_NAME

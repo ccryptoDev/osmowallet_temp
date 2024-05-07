@@ -45,6 +45,7 @@ export class Onchain extends Send implements SendBtc {
     }
 
     async sendNative(data: SendBtcData): Promise<void> {
+        await this.featureService.checkFeatureAvailability(data.authUser,FeatureEnum.SEND)
         const feeSat = data.payload.feeSat;
         const totalAmount = data.payload.amount + feeSat;
         await this.manager.transaction('SERIALIZABLE', async (entityManager) => {
@@ -85,6 +86,7 @@ export class Onchain extends Send implements SendBtc {
     }
 
     async sendAutoconvert(data: SendBtcData): Promise<void> {
+        await this.featureService.checkFeatureAvailability(data.authUser,FeatureEnum.AUTOCONVERT_TO_SEND)
         let buyFee = 0;
         const coin = await this.manager.findOneBy(Coin, { id: data.payload.coinId });
         if (coin == null) throw new BadRequestException('Coin not found');

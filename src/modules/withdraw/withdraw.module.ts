@@ -27,6 +27,7 @@ import { RidiviModule } from 'src/services/ridivi/ridivi.module';
         FeaturesModule,
         CoinsModule,
         PushNotificationModule,
+        FeaturesModule,
     ],
     providers: [WithdrawService, CsvWithdrawHelper, SendGridService, GoogleCloudTasksService],
     controllers: [WithdrawController],

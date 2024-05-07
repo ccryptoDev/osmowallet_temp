@@ -36,6 +36,6 @@ export class ReferralController {
     @UseGuards(AccessTokenGuard)
     @Post('/generate-invitation')
     async generateInvitation(@User() user: AuthUser, @Body() data: OsmoReferralDto) {
-        return this.referralService.generateInvitation(user.sub, data);
+        return this.referralService.generateInvitation(user, data);
     }
 }

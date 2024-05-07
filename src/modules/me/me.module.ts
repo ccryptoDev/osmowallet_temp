@@ -17,6 +17,8 @@ import { IbexAccount } from 'src/entities/ibex.account.entity';
 import { UsernameMsService } from '../username-ms/username-ms.service';
 import { WalletsModule } from '../wallets/wallets.module';
 import { UsersModule } from '../users/users.module';
+import { ReferralSource } from 'src/entities/referral.source.entity';
+import { UserReferralSource } from 'src/entities/user.referral.source.entity';
 
 @Module({
     imports: [
@@ -32,6 +34,8 @@ import { UsersModule } from '../users/users.module';
             Autoconvert,
             AccountDeletion,
             IbexAccount,
+            ReferralSource,
+            UserReferralSource,
         ]),
         WalletsModule,
         UsersModule,

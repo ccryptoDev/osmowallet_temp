@@ -2,11 +2,12 @@ import { SlackEmoji } from '../enums/slack-emoji.enum';
 
 type SendStillmanParams = {
     reservesAmount: number;
-    amount: number;
+    requeredBalance: number;
+    treasuresAmount: number;
     callType: 'Sell' | 'Buy';
 };
 
-export const stillmanTemplate = ({ reservesAmount, amount, callType }: SendStillmanParams) => {
+export const stillmanTemplate = ({ reservesAmount, treasuresAmount, requeredBalance, callType }: SendStillmanParams) => {
     return {
         blocks: [
             {
@@ -28,7 +29,7 @@ export const stillmanTemplate = ({ reservesAmount, amount, callType }: SendStill
                 fields: [
                     {
                         type: 'mrkdwn',
-                        text: `*Amount ${callType === 'Sell' ? 'sent' : 'requested'}:* $${amount}`,
+                        text: `*Amount ${callType === 'Sell' ? 'sent' : 'requested'}:* SAT  ${requeredBalance}`,
                     },
                     {
                         type: 'mrkdwn',
@@ -36,7 +37,11 @@ export const stillmanTemplate = ({ reservesAmount, amount, callType }: SendStill
                     },
                     {
                         type: 'mrkdwn',
-                        text: `*Reserves Amount:* $${reservesAmount}`,
+                        text: `*Treasures Amount:* SAT ${treasuresAmount}`,
+                    },
+                    {
+                        type: 'mrkdwn',
+                        text: `*Reserves Amount:* SAT ${reservesAmount}`,
                     },
                 ],
             },

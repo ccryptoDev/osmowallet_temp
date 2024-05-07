@@ -14,4 +14,10 @@ export class StillmanParams {
 
     @Column({ default: 'bc1qdqdkujd64m4v48pr6wwhdp52xd9aq4xm39rwrn' })
     stillmanAddress!: string;
+
+    @Column({ name: 'min_range', default: 0.0, type: 'decimal', precision: 15, scale: 2, transformer: numberTransformer })
+    minRange!: number;
+
+    @Column({ name: 'max_range' , default: 0.0, type: 'decimal', precision: 15, scale: 2, transformer: numberTransformer })
+    maxRange!: number;
 }

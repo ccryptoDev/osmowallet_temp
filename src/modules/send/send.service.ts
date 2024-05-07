@@ -41,6 +41,8 @@ import { CreateTransaction } from './dtos/transaction.dto';
 import { SendFiatContext } from './send_fiat/sendFiatContext';
 import { NormalSendFiat } from './send_fiat/strategies/normalSendFiat.strategy';
 import { SmsSendFiat } from './send_fiat/strategies/smsSendFiat.strategy';
+import { TransactionType } from 'src/common/enums/transactionsType.enum';
+import { FeatureEnum } from 'src/common/enums/feature.enum';
 
 @Injectable()
 export class SendService {
@@ -99,7 +101,7 @@ export class SendService {
     }
 
     async sendV2(user: AuthUser, data: SendDto) {
-        //await this.transactionService.checkTransactionRateLimit(authUser.sub,TransactionType.SEND)
+        await this.transactionService.checkTransactionRateLimit(user.sub,TransactionType.SEND)
         if (data.address.toLowerCase().startsWith('lnbc') || data.address.toLowerCase().startsWith('lnurl')) {
             data.address = data.address.toLocaleLowerCase();
         }
@@ -277,6 +279,7 @@ export class SendService {
     }
 
     async sendFiat(authUser: AuthUser, data: SendFiatDto) {
+        await this.featureService.checkFeatureAvailability(authUser,FeatureEnum.SEND_FIAT)
         if (data.mobile != null && data.receiverId != null) throw new BadRequestException('receiverId y mobile no pueden ir juntos');
         const manager = this.addressRepository.manager;
         let strategy;

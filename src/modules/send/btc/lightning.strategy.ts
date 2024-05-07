@@ -66,6 +66,7 @@ export class Lightning extends Send implements SendBtc {
     }
 
     async sendNative(data: SendBtcData): Promise<any> {
+        await this.featureService.checkFeatureAvailability(data.authUser,FeatureEnum.SEND)
         const amountSats = this.validateInvoiceExpiration(data);
         let userBtcWallet: Wallet | undefined;
         await this.manager.transaction('SERIALIZABLE', async (entityManager) => {
@@ -105,6 +106,7 @@ export class Lightning extends Send implements SendBtc {
     }
 
     async sendAutoconvert(data: SendBtcData): Promise<void> {
+        await this.featureService.checkFeatureAvailability(data.authUser,FeatureEnum.AUTOCONVERT_TO_SEND)
         const settings = await this.manager.find(Setting);
 
         const SATOSHI_TO_BITCOIN_RATIO = Math.pow(10, -8);
@@ -233,8 +235,8 @@ export class Lightning extends Send implements SendBtc {
 
             const queryDuration = Date.now() - startTime;
             console.log(`Query for getInvoiceFromBolt11 took ${queryDuration}ms`);
-            let osmoBusiness: OsmoBusinessBpt | null
-            if(invoice){
+            let osmoBusiness: OsmoBusinessBpt | null;
+            if (invoice) {
                 osmoBusiness = await this.manager.findOneBy(OsmoBusinessBpt, { bptName: invoice.memo });
             }
 
@@ -315,8 +317,8 @@ export class Lightning extends Send implements SendBtc {
             const invoiceDuration = Date.now() - invoiceStartTime;
             console.log(`Fetching invoice took ${invoiceDuration}ms`);
 
-            let osmoBusiness: OsmoBusinessBpt | null
-            if(invoice){
+            let osmoBusiness: OsmoBusinessBpt | null;
+            if (invoice) {
                 osmoBusiness = await this.manager.findOneBy(OsmoBusinessBpt, { bptName: invoice.memo });
             }
             const transactionStart = Date.now();

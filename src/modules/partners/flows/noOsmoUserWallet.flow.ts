@@ -7,6 +7,7 @@ import { OsmoWalletUserFlow } from './osmoWalletUser.flow';
 import { SmsService } from 'src/services/sms/sms.service';
 import { PartnerInvoice } from 'src/schemas/partnerInvoice.schema';
 import * as ln from 'lnurl';
+import { WhatsappTemplate } from 'src/services/sms/templates/whatsapp.template';
 
 export class NoOsmoUserWallet implements PartnerFlowStrategy {
     constructor(
@@ -18,9 +19,11 @@ export class NoOsmoUserWallet implements PartnerFlowStrategy {
 
     async notify(smsService: SmsService) {
         const targetAmount = this.partnerInvoice.targetAmount;
-        smsService.sendSMS({
-            message: `Has recibido ${targetAmount.amount} ${targetAmount.currency} de Strike. Haz click aquí en el enlace para redimirlos: https://osmowallet.com`,
+        smsService.sendFiatInvitation({
             phoneNumber: this.partnerInvoice.phoneNumber,
+            amount: targetAmount.amount,
+            currency: targetAmount.currency,
+            from: 'Strike',
         });
     }
 

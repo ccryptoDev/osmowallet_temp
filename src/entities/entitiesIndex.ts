@@ -57,6 +57,9 @@ import { GlobalPaymentCountry } from './globalPaymentCountry.entity';
 import { WalletHistory } from './walletHistory.entity';
 import { TransactionCategory } from './transactionCategory.entity';
 import { CountryCoin } from './countryCoin.entity';
+import { UserFeature } from './feat-user.entity';
+import { ReferralSource } from "./referral.source.entity";
+import { UserReferralSource } from "./user.referral.source.entity";
 
 export default [
     User,
@@ -119,4 +122,7 @@ export default [
     GlobalPayment,
     GlobalPaymentCountry,
     CountryCoin,
+    UserFeature,
+    ReferralSource,
+    UserReferralSource
 ];

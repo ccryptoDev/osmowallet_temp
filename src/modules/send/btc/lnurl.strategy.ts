@@ -43,6 +43,7 @@ export class Lnurl extends Send implements SendBtc {
     }
 
     async sendNative(data: SendBtcData): Promise<any> {
+        await this.featureService.checkFeatureAvailability(data.authUser,FeatureEnum.SEND)
         let btcWallet: Wallet | undefined;
         await this.manager.transaction('SERIALIZABLE', async (entityManager) => {
             const userBtcWallet = await findAndLockWallet({
@@ -80,6 +81,7 @@ export class Lnurl extends Send implements SendBtc {
     }
 
     async sendAutoconvert(data: SendBtcData): Promise<any> {
+        await this.featureService.checkFeatureAvailability(data.authUser,FeatureEnum.AUTOCONVERT_TO_SEND)
         const feature = await this.manager.findOneBy(Feature, { name: FeatureEnum.AUTOCONVERT_TO_SEND });
         if (!feature) throw new BadRequestException('Feature not found');
         const tierFeature = await this.featureService.getTierFeature(feature.id, data.authUser);

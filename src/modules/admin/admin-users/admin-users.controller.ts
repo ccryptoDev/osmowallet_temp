@@ -24,6 +24,7 @@ import { Response } from 'express';
 import { WalletsService } from 'src/modules/wallets/wallets.service';
 import { UpdateUsersDto } from './dtos/updateUser.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { FeaturesService } from 'src/modules/features/features.service';
 
 @UseGuards(AdminAccessTokenGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -35,6 +36,7 @@ export class AdminUsersController {
         private adminUsersService: AdminUsersService,
         private tierService: TiersService,
         private walletService: WalletsService,
+        private featureService: FeaturesService
     ) {}
 
     @ApiOperation({ summary: 'Get wallet summary' })
@@ -168,5 +170,23 @@ export class AdminUsersController {
     @Patch(':id')
     updateUser(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Body() updateUsersDto: UpdateUsersDto) {
         return this.adminUsersService.updateUser(id, updateUsersDto);
+    }
+
+    @ApiOperation({ summary: 'Get user features' })
+    @Get(':id/features')
+    getUserFeatures(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+        return this.featureService.getUserFeatureAvailabilitiesByUser(id)
+    }
+
+    @ApiOperation({summary: 'Activate Feature'})
+    @Patch(':id/features/:id/active')
+    activateUserFeature(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+        return this.featureService.activateUserFeature(id)
+    }
+
+    @ApiOperation({summary: 'Deactivate Feature'})
+    @Patch(':id/features/:id/deactive')
+    deactivateUserFeature(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+        return this.featureService.deactivateUserFeature(id)
     }
 }

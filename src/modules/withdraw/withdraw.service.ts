@@ -35,6 +35,7 @@ import { CashOutWithdraw } from './strategies/cash-out.strategy';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { RidiviService } from 'src/services/ridivi/ridivi.service';
 import { PartialBy } from '../../../types/global';
+import { FeatureEnum } from 'src/common/enums/feature.enum';
 
 @Injectable()
 export class WithdrawService {
@@ -158,6 +159,7 @@ export class WithdrawService {
     }
 
     async withdraw(authUser: AuthUser, body: WithdrawDto) {
+        await this.featureService.checkFeatureAvailability(authUser,FeatureEnum.WITHDRAW)
         const withdrawMethod = await this.withdrawalMethodRepository.findOneBy({ id: body.withdrawMethodId });
         if (!withdrawMethod) throw new BadRequestException('Invalid funding method');
         const user = await this.userRepository.findOneBy({ id: authUser.sub });

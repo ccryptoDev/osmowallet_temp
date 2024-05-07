@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { TransactionsValidatedDto } from '../admin/admin-transactions/dtos/transactionsValidated.dto';
 import { AutomationService } from './automation.service';
@@ -32,13 +32,22 @@ export class AutomationController {
 
     @ApiOperation({ summary: 'Transactions validated' })
     @ApiBearerAuth()
-    @Post('validated')
+    @Post('/validated')
     async transactionsValidated(@Body() transactions: TransactionsValidatedDto) {
         return this.automationService.transactionsValidated(transactions);
+    }
+
+
+    @ApiOperation({ summary: 'Update wallet status' })
+    @Patch('/status')
+    updateWalletStatus() {
+        return this.automationService.updateWalletStatus();
     }
 
     @Post('stillman')
     async stillmanWithdraw() {
         return this.automationService.stillmanInvoice();
     }
+
+
 }

@@ -17,6 +17,7 @@ import { VerifyEmailValid } from './dto/verifyEmailValid.dto';
 import { AuthUser } from './payloads/auth.payload';
 import { User } from 'src/common/decorators/user.decorator';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { HowFindoutUsDto } from './dto/howFindoutUs.dto';
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -85,6 +86,11 @@ export class AuthController {
     @ApiOperation({ summary: 'Sign in' })
     signin(@Body() data: any) {
         return this.authService.signIn(data);
+    }
+
+    @Post('how-find-out')
+    howFindoutUs(@Body() data: HowFindoutUsDto) {
+        return this.authService.howFindoutUs(data);
     }
 
     @Post('signin/verify-otp')

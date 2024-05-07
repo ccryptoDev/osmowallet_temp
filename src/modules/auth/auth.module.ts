@@ -47,6 +47,10 @@ import { GoogleCloudTasksService } from 'src/services/google-cloud-tasks/google-
 import { UsersModule } from '../users/users.module';
 import { KycModule } from '../kyc/kyc.module';
 import { FundingMethod } from 'src/entities/fundingMethod.entity';
+import { UserFeature } from 'src/entities/feat-user.entity';
+import { UserReferralSource } from 'src/entities/user.referral.source.entity';
+import { ReferralSource } from 'src/entities/referral.source.entity';
+import { HowFindoutUsDto } from 'src/modules/auth/dto/howFindoutUs.dto';
 
 @Module({
     imports: [
@@ -75,6 +79,10 @@ import { FundingMethod } from 'src/entities/fundingMethod.entity';
             Tier,
             TierUser,
             FundingMethod,
+            UserFeature,
+            UserReferralSource,
+            ReferralSource,
+            HowFindoutUsDto
         ]),
         IbexModule,
         ReferralModule,

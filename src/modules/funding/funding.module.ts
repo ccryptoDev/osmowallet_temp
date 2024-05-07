@@ -46,6 +46,7 @@ import { FundingService } from './funding.service';
         IbexModule,
         RidiviModule,
         CardModule,
+        FeaturesModule,
     ],
     controllers: [FundingController],
     providers: [FundingService, GoogleCloudStorageService, GoogleCloudTasksService, MyLogger, SendGridService, OnvoService],

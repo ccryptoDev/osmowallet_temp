@@ -37,6 +37,8 @@ import { PushNotificationService } from '../push-notification/push-notification.
 import { SendGridService } from '../send-grid/send-grid.service';
 import { OsmoReferralDto } from './dtos/osmoReferral.dto';
 import { RefundReferral } from './interfaces/refund.interface';
+import { FeaturesService } from '../features/features.service';
+import { FeatureEnum } from 'src/common/enums/feature.enum';
 
 @Injectable()
 export class ReferralService {
@@ -58,6 +60,7 @@ export class ReferralService {
         private partnerService: PartnersService,
         private smsService: SmsService,
         private googleTasksService: GoogleCloudTasksService,
+        private featureService: FeaturesService,
     ) {}
 
     async refundOsmoReferralTransaction(refundReferral: RefundReferral) {
@@ -192,17 +195,18 @@ export class ReferralService {
         this.googleTasksService.createInternalTask(this.refundQueue, refundReferral, this.refundUrl);
     }
 
-    async generateInvitation(userId: string, data: OsmoReferralDto) {
+    async generateInvitation(authUser: AuthUser, data: OsmoReferralDto) {
+        await this.featureService.checkFeatureAvailability(authUser,FeatureEnum.REFERRAL)
         const referrals = await this.referralRepository.count({
             where: {
-                inviter: { id: userId },
+                inviter: { id: authUser.sub },
                 isOsmoSponsor: true,
             },
         });
         if (referrals >= 10) throw new BadRequestException('Limite de referral alcanzados');
 
         const settings = await this.settingsRepository.find();
-        const user = await this.userRepository.findOneBy({ id: userId });
+        const user = await this.userRepository.findOneBy({ id: authUser.sub });
         if (!user) throw new BadRequestException('Invalid user');
 
         const coin = await this.coinRepository.findOneBy({ acronym: CoinEnum.USD });
@@ -249,9 +253,11 @@ export class ReferralService {
             await transactionalEntityManager.insert(Referral, referral);
             await transactionalEntityManager.insert(Transaction, osmoTransaction);
 
-            this.smsService.sendSMS({
-                message: `Acabas de recibir $${invitedReward} USD de Osmo. Descarga OsmoWallet desde https://osmowallet.com y crea tu cuenta para obtenerlos. `,
+            this.smsService.sendFiatInvitation({
                 phoneNumber: data.phoneNumber,
+                amount: invitedReward.toNumber(),
+                currency: 'USD',
+                from: 'Osmo',
             });
         });
     }

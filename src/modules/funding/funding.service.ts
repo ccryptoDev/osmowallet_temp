@@ -24,6 +24,8 @@ import { OnvoFunding } from './strategies/onvo.strategy';
 import { OsmoBankFunding } from './strategies/osmoFunding.strategy';
 import { SinpeFunding } from './strategies/sinpe.strategy';
 import { StableFunding } from './strategies/stable-funding.strategy';
+import { FeatureEnum } from 'src/common/enums/feature.enum';
+import { FeaturesService } from '../features/features.service';
 
 @Injectable()
 export class FundingService {
@@ -36,6 +38,7 @@ export class FundingService {
         private ridiviService: RidiviService,
         private cardService: CardService,
         private googleTaskService: GoogleCloudTasksService,
+        private featureService: FeaturesService,
     ) {}
 
     async getAllFundingMethods() {
@@ -112,6 +115,7 @@ export class FundingService {
     }
 
     async fund(authUser: AuthUser, body: FundingDto, file?: Express.Multer.File) {
+        await this.featureService.checkFeatureAvailability(authUser,FeatureEnum.FUNDING)
         const tierFundingMethods = await this.tierFundingRepository.findOne({
             relations: {
                 fundingMethod: {

@@ -1,47 +1,44 @@
-import { Body, Controller, Get, Param, Post, Patch, Req, UseGuards } from '@nestjs/common';
-import { WalletsService } from './wallets.service';
-import {
-    Request
-} from 'express';
+import { Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { User } from 'src/common/decorators/user.decorator';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
-import { CreateAccountDto } from './dtos/createAccount.dto';
-import { CreateWalletDto } from './dtos/createWallet.dto';
+import { AuthUser } from '../auth/payloads/auth.payload';
+import { WalletsService } from './wallets.service';
 
 @ApiTags('Wallets')
 @ApiBearerAuth()
 @UseGuards(AccessTokenGuard)
 @Controller('wallets')
 export class WalletsController {
-    constructor(private walletService: WalletsService) { }
+    constructor(private walletService: WalletsService) {}
 
     @ApiOperation({ summary: 'Hide a wallet' })
     @Patch('/:id/hide')
     hideWallet(@Param('id') id: string) {
-        return this.walletService.hideWallet(id)
+        return this.walletService.hideWallet(id);
     }
 
     @ApiOperation({ summary: 'Show a wallet' })
     @Patch('/:id/show')
     showWallet(@Param('id') id: string) {
-        return this.walletService.showWallet(id)
+        return this.walletService.showWallet(id);
     }
 
     @ApiOperation({ summary: 'Get all wallets' })
     @Get()
-    getWallets(@Req() req: Request) {
-        return this.walletService.getWalletsByUser(req.user['sub'])
+    getWallets(@User() user: AuthUser) {
+        return this.walletService.getWalletsByUser(user.sub);
     }
 
-    @Post('createAccount')
-    async createAccount(@Body() createAccountDto: CreateAccountDto) {
-        return this.walletService.createAccount(createAccountDto);
+    @ApiOperation({ summary: 'Update wallet status' })
+    @Patch('/:id/desactive')
+    updateWalletDesactive(@Param('id') id: string) {
+        return this.walletService.updateWalletDesactive(id);
     }
 
-    @Post(':accountId/wallets/create')
-    async createWallet(
-        @Param('accountId') accountId: string,
-        @Body() createWalletDto: CreateWalletDto,
-    ) {
-        return this.walletService.createWallet(accountId, createWalletDto);
+    @ApiOperation({ summary: 'Update wallet status' })
+    @Patch('/:id/active')
+    updateWalletActive(@Param('id') id: string) {
+        return this.walletService.updateWalletActive(id);
     }
 }
