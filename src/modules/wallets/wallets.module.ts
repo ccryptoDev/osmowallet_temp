@@ -6,15 +6,15 @@ import { CoinsModule } from '../coins/coins.module';
 import { WalletsController } from './wallets.controller';
 import { HttpModule } from '@nestjs/axios';
 import { MongooseModule } from '@nestjs/mongoose';
-import { cryptomate_account, cryptomate_accountSchema } from 'src/schemas/account.schema';
-import { MongoWallet, MongoWalletSchema } from 'src/schemas/wallets.schema';
+import { cryptomateAccount, cryptomateAccountSchema } from 'src/schemas/account.schema';
+import { cryptomateWallet, cryptomateWalletSchema } from 'src/schemas/wallets.schema';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Wallet]),
         MongooseModule.forFeature([
-            { name: cryptomate_account.name, schema: cryptomate_accountSchema },
-            { name: MongoWallet.name, schema: MongoWalletSchema },
+            { name: cryptomateAccount.name, schema: cryptomateAccountSchema },
+            { name: cryptomateWallet.name, schema: cryptomateWalletSchema },
         ]),
         CoinsModule, 
         HttpModule
