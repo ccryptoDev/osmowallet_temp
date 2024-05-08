@@ -2,7 +2,11 @@ import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 @Schema()
-export class MongoAccount extends Document {
+export class cryptomateAccount extends Document {
+
+  @Prop()
+  user_id!: string;
+
   @Prop()
   id!: string;
 
@@ -13,4 +17,4 @@ export class MongoAccount extends Document {
   wallets!: any[];
 }
 
-export const MongoAccountSchema = SchemaFactory.createForClass(MongoAccount);
+export const cryptomateAccountSchema = SchemaFactory.createForClass(cryptomateAccount);

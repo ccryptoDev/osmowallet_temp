@@ -3,6 +3,7 @@ import { AppService } from './app.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CreateAccountDto } from './modules/wallets/dto/createAccount.dto';
 import { WalletsService } from './modules/wallets/wallets.service';
+import { CreateWalletDto } from './modules/wallets/dto/createWallet.dto';
 
 @ApiTags('App')
 @ApiBearerAuth()
@@ -10,7 +11,7 @@ import { WalletsService } from './modules/wallets/wallets.service';
 export class AppController {
   constructor(private readonly appService: AppService,
     private readonly walletService: WalletsService
-  ) {}
+  ) { }
 
   @Get('referral-source')
   getReferralSource() {
@@ -18,7 +19,13 @@ export class AppController {
   }
 
   @Post('/createAccount')
-    async createAccount(@Body() createAccountDto: CreateAccountDto) {
-        return this.walletService.createAccount(createAccountDto);
-    }
+  async createAccount(@Body() createAccountDto: CreateAccountDto) {
+    return this.walletService.createAccount(createAccountDto);
+  }
+  @Post('/createWallet')
+  async createWallet(
+    @Body() createWalletDto: CreateWalletDto,
+  ) {
+    return this.walletService.createWallet(createWalletDto);
+  }
 }

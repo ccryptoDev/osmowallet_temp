@@ -7,20 +7,20 @@ import { CreateWalletDto } from './dto/createWallet.dto';
 import { CreateAccountDto } from './dto/createAccount.dto';
 import { HttpService } from '@nestjs/axios';
 import { InjectModel } from '@nestjs/mongoose';
-import { MongoAccount } from 'src/schemas/account.schema';
+import { cryptomateAccount } from 'src/schemas/account.schema';
 import { Model } from 'mongoose';
-import { MongoWallet } from 'src/schemas/wallets.schema';
+import { cryptomateWallet } from 'src/schemas/wallets.schema';
 import { Observable } from 'rxjs';
 
 @Injectable()
 export class WalletsService {
     constructor(
         @InjectRepository(Wallet) private walletRepository: Repository<Wallet>,
-        @InjectModel(MongoAccount.name) private readonly mongoCreateAccountModel: Model<MongoAccount>,
-        @InjectModel(MongoWallet.name) private readonly mongoCreateWallettModel: Model<MongoWallet>,
+        @InjectModel(cryptomateAccount.name) private readonly mongoCreateAccountModel: Model<cryptomateAccount>,
+        @InjectModel(cryptomateWallet.name) private readonly mongoCreateWallettModel: Model<cryptomateWallet>,
         private httpService: HttpService,
         private coinService: CoinsService,
-    ) {}
+    ) { }
 
     async getSUMWalletUsers() {
         const coins = await this.coinService.getAll();
@@ -101,7 +101,7 @@ export class WalletsService {
 
         return { message: 'Wallet status updated' };
     }
-    async createAccount(createAccountDto: CreateAccountDto):Promise<any>{
+    async createAccount(createAccountDto: CreateAccountDto): Promise<any> {
         const headers = {
             'x-api-key': process.env.CRYPTOMATE_SANDBOX_API_KEY
         };
@@ -109,31 +109,49 @@ export class WalletsService {
         try {
             const response = await this.httpService.post(
                 url,
-                createAccountDto,
+                { alias: createAccountDto.alias },
                 { headers },
             ).toPromise();
-            await this.mongoCreateAccountModel.create(response?.data);
+            const newCryptoMateAccount = {
+                "user_id": createAccountDto.user_id,
+                "id": response?.data.id,
+                "alias": response?.data.alias,
+                "wallets": response?.data.wallets
+            }
+
+            const responseAccount = await this.mongoCreateAccountModel.create(newCryptoMateAccount);
             
-            return response?.data;
+            return responseAccount;
         } catch (error) {
             console.log('error', error);
             throw error;
         }
     }
 
-    async createWallet(accountId: string, createWalletDto: CreateWalletDto) {
+    async createWallet(createWalletDto: CreateWalletDto) {
         const headers = {
-            'x-api-key': process.env.CRYPTOMATE_SANDBOX_API_KEY
+            'x-api-key': process.env.CRYPTOMATE_SANDBOX_API_KEY,
         };
-        const url = process.env.CRYPTOMATE_SANDBOX_API_URL + '/mpc/accounts/${accountId}/wallets/create'
+        const url = process.env.CRYPTOMATE_SANDBOX_API_URL + `/mpc/accounts/${createWalletDto.accountId}/wallets/create`
+
         try {
             const response = await this.httpService.post(
                 url,
-                createWalletDto,
+                {
+                    alias: createWalletDto.alias,
+                    blockchain: createWalletDto.blockchain
+                },
                 { headers },
             ).toPromise();
-            await this.mongoCreateWallettModel.create(response?.data)
-            return response?.data;
+            const newCryptoMateWallet = {
+                "user_id": createWalletDto.user_id,
+                "id": response?.data.id,
+                "wallet_address": response?.data.wallet_address,
+                "blockchain": response?.data.blockchain,
+                "enabled": response?.data.enabled,
+            }
+            const responseWallet = await this.mongoCreateWallettModel.create(newCryptoMateWallet)
+            return responseWallet;
         } catch (error) {
             console.log('error', error);
             throw error;

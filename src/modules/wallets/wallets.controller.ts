@@ -48,11 +48,10 @@ export class WalletsController {
         return this.walletService.createAccount(createAccountDto);
     }
 
-    @Post('/:accountId/wallets/create')
+    @Post('/createWallet')
     async createWallet(
-        @Param('accountId') accountId: string,
         @Body() createWalletDto: CreateWalletDto,
     ) {
-        return this.walletService.createWallet(accountId, createWalletDto);
+        return this.walletService.createWallet(createWalletDto);
     }
 }
