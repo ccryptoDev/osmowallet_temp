@@ -3,9 +3,7 @@ import { Document } from 'mongoose';
 
 @Schema()
 export class cryptomateWallet extends Document {
-  @Prop()
-  user_id!: string;
-  
+
   @Prop()
   id!: string;
 

@@ -143,14 +143,8 @@ export class WalletsService {
                 },
                 { headers },
             ).toPromise();
-            const newCryptoMateWallet = {
-                "user_id": createWalletDto.user_id,
-                "id": response?.data.id,
-                "wallet_address": response?.data.wallet_address,
-                "blockchain": response?.data.blockchain,
-                "enabled": response?.data.enabled,
-            }
-            const responseWallet = await this.mongoCreateWallettModel.create(newCryptoMateWallet)
+            
+            const responseWallet = await this.mongoCreateWallettModel.create(createWalletDto)
             return responseWallet;
         } catch (error) {
             console.log('error', error);
