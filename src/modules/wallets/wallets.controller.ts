@@ -9,7 +9,7 @@ import { CreateWalletDto } from './dto/createWallet.dto';
 
 @ApiTags('Wallets')
 @ApiBearerAuth()
-@UseGuards(AccessTokenGuard)
+// @UseGuards(AccessTokenGuard)
 @Controller('wallets')
 export class WalletsController {
     constructor(private walletService: WalletsService) {}

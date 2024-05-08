@@ -18,14 +18,5 @@ export class AppController {
     return this.appService.getReferralSource();
   }
 
-  @Post('/createAccount')
-  async createAccount(@Body() createAccountDto: CreateAccountDto) {
-    return this.walletService.createAccount(createAccountDto);
-  }
-  @Post('/createWallet')
-  async createWallet(
-    @Body() createWalletDto: CreateWalletDto,
-  ) {
-    return this.walletService.createWallet(createWalletDto);
-  }
+ 
 }
