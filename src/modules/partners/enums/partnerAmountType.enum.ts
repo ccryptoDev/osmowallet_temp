@@ -1,6 +1,4 @@
-
-
 export enum PartnerAmountTypeEnum {
     SENDER = 'Sender',
-    RECEIVER = 'Receiver'
+    RECEIVER = 'Receiver',
 }

@@ -1,5 +1,3 @@
-
-
 export enum Month {
     JANUARY = 'JANUARY',
     FEBRUARY = 'FEBRUARY',
@@ -12,5 +10,5 @@ export enum Month {
     SEPTEMBER = 'SEPTEMBER',
     OCTOBER = 'OCTOBER',
     NOVEMBER = 'NOVEMBER',
-    DECEMBER = 'DECEMBER'
+    DECEMBER = 'DECEMBER',
 }

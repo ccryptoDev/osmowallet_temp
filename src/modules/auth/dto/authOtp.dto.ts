@@ -1,12 +1,14 @@
-import { Transform } from "class-transformer"
-import { IsNumber, IsString } from "class-validator"
-import { AuthDto } from "./auth.dto"
-import { SignInDto } from "./signin.dto"
+import { Transform } from 'class-transformer';
+import { IsNumber } from 'class-validator';
+import { SignInDto } from './signin.dto';
+import { ApiProperty } from '@nestjs/swagger';
 
-
-export class AuthOTPDto extends SignInDto{
-
+export class AuthOTPDto extends SignInDto {
     @IsNumber()
     @Transform(({ value }) => parseInt(value))
-    otp: number
+    @ApiProperty({
+        description: 'The OTP (One-Time Password)',
+        example: 123456,
+    })
+    otp!: number;
 }

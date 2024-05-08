@@ -1,18 +1,16 @@
-import { registerAs } from "@nestjs/config";
-import { TypeOrmModuleOptions } from "@nestjs/typeorm";
+import { registerAs } from '@nestjs/config';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { config as dotenvConfig } from 'dotenv';
 
-import { DataSource, DataSourceOptions } from "typeorm";
+import { DataSource, DataSourceOptions } from 'typeorm';
 dotenvConfig({ path: '.env.development' });
-
-console.log('database',process.env.DATABASE_URL)
 
 export const config: TypeOrmModuleOptions = {
     type: 'cockroachdb',
-    url: new URL(process.env.DATABASE_URL).toString(),
-    entities: ["dist/**/*.entity{.ts,.js}"],
-    migrations: ["dist/migrations/*{.ts,.js}"],
-    ssl: false,    
+    url: new URL(process.env.DATABASE_URL ?? '').toString(),
+    entities: ['dist/**/*.entity{.ts,.js}'],
+    migrations: ['dist/migrations/*{.ts,.js}'],
+    ssl: false,
     autoLoadEntities: true,
     synchronize: false,
     maxTransactionRetries: 100,
@@ -21,8 +19,8 @@ export const config: TypeOrmModuleOptions = {
     migrationsRun: process.env.DATABASE_MIGRATIONS_RUN === 'true',
     extra: {
         max: 2000, // Set maximum number of connections in the pool.
-        min: 1000,  // Set minimum number of connections in the pool.
+        min: 1000, // Set minimum number of connections in the pool.
     },
-}
-export default registerAs('typeorm', () => config)
+};
+export default registerAs('typeorm', () => config);
 export const connectionSource = new DataSource(config as DataSourceOptions);

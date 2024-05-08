@@ -1,5 +1,4 @@
-
 export enum ColombiaDocumentType {
     CEDULA = 'Cedula',
-    NIT = 'NIT'
+    NIT = 'NIT',
 }

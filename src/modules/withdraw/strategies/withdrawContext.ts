@@ -1,14 +1,13 @@
-import { Withdraw } from "./withdraw";
+import { Withdraw } from './withdraw';
 
+export class WithdrawContext {
+    private strategy: Withdraw;
 
-export class WithdrawContext{
-    private strategy: Withdraw
-
-    constructor(strategy: Withdraw){
-        this.strategy = strategy
+    constructor(strategy: Withdraw) {
+        this.strategy = strategy;
     }
 
-    async withdraw(){
-       return await this.strategy.withdraw()
+    async withdraw() {
+        return await this.strategy.withdraw();
     }
 }

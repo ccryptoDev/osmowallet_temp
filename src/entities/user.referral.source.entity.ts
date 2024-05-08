@@ -1,18 +1,17 @@
-import { Entity, PrimaryColumn, OneToOne, JoinColumn, Column, ManyToMany, JoinTable } from 'typeorm';
-import { User } from './user.entity';
+import { Entity, Column, PrimaryColumn } from 'typeorm';
 import { ReferralSource } from './referral.source.entity';
 
 @Entity({name: 'user_referral_source'})
 export class UserReferralSource {
   @PrimaryColumn('uuid', { default: () => 'gen_random_uuid()' })
-  id: string;
+  id!: string;
 
   @Column({ unique: true, nullable: true })
-  email: string;
+  email!: string;
 
   @Column({ unique: true, nullable: true })
-  mobile: string;
+  mobile!: string;
 
   @Column({ nullable: true })
-  referralSources: string;
+  referralSources!: string;
 }
