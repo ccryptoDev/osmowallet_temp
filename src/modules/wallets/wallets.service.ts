@@ -3,11 +3,22 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Wallet } from 'src/entities/wallet.entity';
 import { Repository } from 'typeorm';
 import { CoinsService } from '../coins/coins.service';
+import { CreateWalletDto } from './dto/createWallet.dto';
+import { CreateAccountDto } from './dto/createAccount.dto';
+import { HttpService } from '@nestjs/axios';
+import { InjectModel } from '@nestjs/mongoose';
+import { MongoAccount } from 'src/schemas/account.schema';
+import { Model } from 'mongoose';
+import { MongoWallet } from 'src/schemas/wallets.schema';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class WalletsService {
     constructor(
         @InjectRepository(Wallet) private walletRepository: Repository<Wallet>,
+        @InjectModel(MongoAccount.name) private readonly mongoCreateAccountModel: Model<MongoAccount>,
+        @InjectModel(MongoWallet.name) private readonly mongoCreateWallettModel: Model<MongoWallet>,
+        private httpService: HttpService,
         private coinService: CoinsService,
     ) {}
 
@@ -89,5 +100,43 @@ export class WalletsService {
         await this.walletRepository.update(walletId, { isActive: true });
 
         return { message: 'Wallet status updated' };
+    }
+    async createAccount(createAccountDto: CreateAccountDto):Promise<any>{
+        const headers = {
+            'x-api-key': process.env.OSMO_MONEY_API_KEY
+        };
+        const url = process.env.CRYPTOMATE_SANDBOX_API_URL + '/mpc/accounts/create'
+        try {
+            const response = await this.httpService.post(
+                url,
+                createAccountDto,
+                { headers },
+            ).toPromise();
+            const aaa = await this.mongoCreateAccountModel.create(response?.data);
+            
+            return response?.data;
+        } catch (error) {
+            console.log('error', error);
+            throw error;
+        }
+    }
+
+    async createWallet(accountId: string, createWalletDto: CreateWalletDto) {
+        const headers = {
+            'x-api-key': process.env.OSMO_MONEY_API_KEY
+        };
+        const url = process.env.CRYPTOMATE_SANDBOX_API_URL + '/mpc/accounts/${accountId}/wallets/create'
+        try {
+            const response = await this.httpService.post(
+                url,
+                createWalletDto,
+                { headers },
+            ).toPromise();
+            this.mongoCreateWallettModel.create(response?.data)
+            return response?.data;
+        } catch (error) {
+            console.log('error', error);
+            throw error;
+        }
     }
 }

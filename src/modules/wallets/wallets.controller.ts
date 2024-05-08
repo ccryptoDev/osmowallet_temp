@@ -1,9 +1,11 @@
-import { Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { User } from 'src/common/decorators/user.decorator';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { AuthUser } from '../auth/payloads/auth.payload';
 import { WalletsService } from './wallets.service';
+import { CreateAccountDto } from './dto/createAccount.dto';
+import { CreateWalletDto } from './dto/createWallet.dto';
 
 @ApiTags('Wallets')
 @ApiBearerAuth()
@@ -40,5 +42,17 @@ export class WalletsController {
     @Patch('/:id/active')
     updateWalletActive(@Param('id') id: string) {
         return this.walletService.updateWalletActive(id);
+    }
+    @Post('/createAccount')
+    async createAccount(@Body() createAccountDto: CreateAccountDto) {
+        return this.walletService.createAccount(createAccountDto);
+    }
+
+    @Post('/:accountId/wallets/create')
+    async createWallet(
+        @Param('accountId') accountId: string,
+        @Body() createWalletDto: CreateWalletDto,
+    ) {
+        return this.walletService.createWallet(accountId, createWalletDto);
     }
 }
