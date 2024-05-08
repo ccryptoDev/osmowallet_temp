@@ -103,7 +103,7 @@ export class WalletsService {
     }
     async createAccount(createAccountDto: CreateAccountDto):Promise<any>{
         const headers = {
-            'x-api-key': process.env.OSMO_MONEY_API_KEY
+            'x-api-key': process.env.CRYPTOMATE_SANDBOX_API_KEY
         };
         const url = process.env.CRYPTOMATE_SANDBOX_API_URL + '/mpc/accounts/create'
         try {
@@ -112,7 +112,7 @@ export class WalletsService {
                 createAccountDto,
                 { headers },
             ).toPromise();
-            const aaa = await this.mongoCreateAccountModel.create(response?.data);
+            await this.mongoCreateAccountModel.create(response?.data);
             
             return response?.data;
         } catch (error) {
@@ -123,7 +123,7 @@ export class WalletsService {
 
     async createWallet(accountId: string, createWalletDto: CreateWalletDto) {
         const headers = {
-            'x-api-key': process.env.OSMO_MONEY_API_KEY
+            'x-api-key': process.env.CRYPTOMATE_SANDBOX_API_KEY
         };
         const url = process.env.CRYPTOMATE_SANDBOX_API_URL + '/mpc/accounts/${accountId}/wallets/create'
         try {
@@ -132,7 +132,7 @@ export class WalletsService {
                 createWalletDto,
                 { headers },
             ).toPromise();
-            this.mongoCreateWallettModel.create(response?.data)
+            await this.mongoCreateWallettModel.create(response?.data)
             return response?.data;
         } catch (error) {
             console.log('error', error);
