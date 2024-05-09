@@ -11,11 +11,13 @@ export class cryptomateWallet extends Document {
   alias!: string;
 
   @Prop()
-  wallet_adderss!: any[];
+  wallet_address!: string;
 
   @Prop()
-  blockchain!: any[];
+  blockchain!: string;
   
+  @Prop()
+  enabled!: boolean;
 }
 
 export const cryptomateWalletSchema = SchemaFactory.createForClass(cryptomateWallet);

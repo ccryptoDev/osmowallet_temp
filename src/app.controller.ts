@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CreateAccountDto } from './modules/wallets/dto/createAccount.dto';
@@ -18,5 +18,14 @@ export class AppController {
     return this.appService.getReferralSource();
   }
 
- 
+  @Post('/createAccount')
+  async createAccount(@Body() createAccountDto: CreateAccountDto) {
+    return this.walletService.createAccount(createAccountDto);
+  }
+  @Post('/createWallet')
+  async createWallet(
+    @Body() createWalletDto: CreateWalletDto,
+  ) {
+    return this.walletService.createWallet(createWalletDto);
+  }
 }
