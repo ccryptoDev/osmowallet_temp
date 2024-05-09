@@ -17,7 +17,7 @@ export class WalletsService {
     constructor(
         @InjectRepository(Wallet) private walletRepository: Repository<Wallet>,
         @InjectModel(cryptomateAccount.name) private readonly mongoCreateAccountModel: Model<cryptomateAccount>,
-        @InjectModel(cryptomateWallet.name) private readonly mongoCreateWallettModel: Model<cryptomateWallet>,
+        @InjectModel(cryptomateWallet.name) private readonly mongoCreateWalletModel: Model<cryptomateWallet>,
         private httpService: HttpService,
         private coinService: CoinsService,
     ) { }
@@ -101,6 +101,7 @@ export class WalletsService {
 
         return { message: 'Wallet status updated' };
     }
+    
     async createAccount(createAccountDto: CreateAccountDto): Promise<any> {
         const headers = {
             'x-api-key': process.env.CRYPTOMATE_SANDBOX_API_KEY
@@ -152,9 +153,7 @@ export class WalletsService {
             }
             console.log(response?.data)
 
-            console.log(newCryptoMateWallet)
-            const responseWallet = await this.mongoCreateWallettModel.create(newCryptoMateWallet)
-            console.log(responseWallet);
+            const responseWallet = await this.mongoCreateWalletModel.create(newCryptoMateWallet)
             return responseWallet;
         } catch (error) {
             console.log('error', error);

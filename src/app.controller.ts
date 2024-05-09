@@ -22,6 +22,7 @@ export class AppController {
   async createAccount(@Body() createAccountDto: CreateAccountDto) {
     return this.walletService.createAccount(createAccountDto);
   }
+  
   @Post('/createWallet')
   async createWallet(
     @Body() createWalletDto: CreateWalletDto,

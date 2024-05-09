@@ -107,3 +107,8 @@ MONGO_DB_NAME=op://OsmoWallet-DEV/MongoDB/MONGO_DB_NAME
 
 REDIS_HOST=op://OsmoWallet-DEV/Redis/REDIS_HOST
 REDIS_PORT=op://OsmoWallet-DEV/Redis/REDIS_PORT
+
+CRYPTOMATE_API_URL=op://OsmoWallet-DEV/CryptoMate/website
+CRYPTOMATE_API_KEY=op://OsmoWallet-DEV/CryptoMate/API_KEY
+CRYPTOMATE_SANDBOX_API_URL=op://OsmoWallet-DEV/CryptoMate Sandbox/website
+CRYPTOMATE_SANDBOX_API_KEY=op://OsmoWallet-DEV/CryptoMate Sandbox/API_KEY

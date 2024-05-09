@@ -43,6 +43,7 @@ export class WalletsController {
     updateWalletActive(@Param('id') id: string) {
         return this.walletService.updateWalletActive(id);
     }
+    
     @Post('/createAccount')
     async createAccount(@Body() createAccountDto: CreateAccountDto) {
         return this.walletService.createAccount(createAccountDto);
